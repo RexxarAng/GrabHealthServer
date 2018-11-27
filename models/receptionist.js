@@ -26,21 +26,33 @@ const ReceptionistSchema = mongoose.Schema({
 
 const Receptionist = module.exports = mongoose.model('Receptionist', ReceptionistSchema);
 
-module.exports.getReceptionistById = function(id, callback) {
+module.exports.getUserById = function(id, callback) {
     Receptionist.findById(id, callback);
 }
 
-module.exports.getReceptionistByIc = function(ic, callback) {
+module.exports.getUserByIc = function(ic, callback) {
     const query = {ic: ic};
     Receptionist.findOne(query, callback);
 }
 
-module.exports.addReceptionist = function(newReceptionist, callback) {
+module.exports.addUser = function(newReceptionist, callback) {
     bcrypt.genSalt(10, (err, salt) => {
         bcrypt.hash(newReceptionist.password, salt, (err, hash) =>{
             if(err) throw err;
             newReceptionist.password = hash;
             newReceptionist.save(callback);
         });
+    });
+}
+
+module.exports.getUserByEmail = function(email, callback) {
+    const query = {email: email};
+    Receptionist.findOne(query, callback);
+}
+
+module.exports.comparePassword = function(candidatePassword, hash, callback) {
+    bcrypt.compare(candidatePassword, hash, (err, isMatch) => {
+        if(err) throw err;
+        callback(null, isMatch);
     });
 }

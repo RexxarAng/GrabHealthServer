@@ -10,14 +10,18 @@ const Manager = require("../models/manager");
 const Clinic = require("../models/clinic");
 const nodemailer = require('nodemailer');
 const Validator = require('../validation/validation');
+const smtpTransport = require('nodemailer-smtp-transport');
 
-var transporter = nodemailer.createTransport({
+var transporter = nodemailer.createTransport(smtpTransport({
     service: 'gmail',
     auth: {
       user: 'grabhealthteam@gmail.com',
       pass: 'GrabHealth2018S2ABCE'
+    },
+    tls: {
+        rejectUnauthorized: false
     }
-  });
+  }));
   
   var mailOptions = {
     from: 'grabhealthteam@gmail.com',
@@ -25,6 +29,48 @@ var transporter = nodemailer.createTransport({
     subject: 'Enter subject',
     text: 'Enter text'
   };
+
+router.post('/authenticate', (req, res, next) => {
+    const role = req.body.role;
+    const email = req.body.email;
+    const password = req.body.password;
+    var currentRole;
+    if(role == "Manager"){
+        currentRole = Manager;
+    } else if(role == "Receptionist") {
+        currentRole = Receptionist;
+    } else {
+        return res.json({success: false, msg: "Invalid role."})
+    }
+    currentRole.getUserByEmail(email ,(err, user) => {
+        if(err) return res.json({success: false, msg: "Cannot do it"});
+        if(!user){
+            return res.json({success: false, msg: "Invalid email or password entered."});
+        }
+        currentRole.comparePassword(password, user.password, (err, isMatch) => {
+            if(err) throw err;
+            if(isMatch){
+                user.password = undefined;
+                const token = jwt.sign(JSON.parse(JSON.stringify(user)), config.secret, {
+                    expiresIn: 3600 
+                });
+
+                res.json({
+                    success: true,
+                    token: 'JWT ' + token,
+                    user: {
+                        id: user._id,
+                        email: user.email,
+                        role: role
+                    }
+                });
+            } else {
+                return res.json({success: false, msg: 'Invalid email or password entered.'})
+            }
+        });
+    });
+});
+
 router.post('/receptionist/register', (req, res, next) => { 
     let newReceptionist = new({
         firstname: req.body.firstname,
@@ -33,7 +79,7 @@ router.post('/receptionist/register', (req, res, next) => {
         ic: req.body.ic,
         password: req.body.password
     });
-    Receptionist.addReceptionist(newReceptionist, (err, receptionist) => {
+    Receptionist.addUser(newReceptionist, (err, receptionist) => {
         if(err){
             return res.json({success: false, msg: "Failed to register receptionist"});
         } else {
@@ -47,7 +93,7 @@ router.post('/clinic/register', (req, res, next) => {
     if(!Validator.validateNric(req.body.manager.nric)){
         return res.json({success:false, msg: "invalid ic number!"});
     };
-    if(Validator.validateEmail(req.body.manager.email)) {
+    if(!Validator.validateEmail(req.body.manager.email)) {
         return res.json({success:false, msg: "invalid email format" })
     };
     var randomPassword = password.randomPassword({ characters: password.lower + password.upper + password.digits });
@@ -61,7 +107,7 @@ router.post('/clinic/register', (req, res, next) => {
         contactNo: req.body.manager.contactNo,
         doctorLicenseNo: req.body.manager.doctorLicenseNo,
     });
-    Manager.addManager(newManager, (err, manager) => {
+    Manager.addUser(newManager, (err, manager) => {
         if(err){
             return res.json({success: false, msg: err});
         } else {  
@@ -84,11 +130,20 @@ router.post('/clinic/register', (req, res, next) => {
                         updateManager.clinic = clinic._id;
                         updateManager.save();
                     });
-                    mailOptions.subject = "Thank you for registering your clinic with us!"
-                    mailOptions.text = "You have successfully registered your clinic under " + manager.email + "and the password will be " + randomPassword
+                    mailOptions.subject = "Thank you for registering your clinic with us!";
+                    mailOptions.text = "Dear " + manager.firstName + " " + manager.lastName + ", \n\n" + 
+                        "Thank you for your application. We are pleased to inform you that you have successfully registered your clinic with us.\n\n" +
+                        "Your login email will be " + manager.email + " and the password will be " + randomPassword + ". \n\n" +
+                        "We look forward to an enjoyable partnership with you and your clinic. \n\n" +
+                        "Best regards, \n" +
+                        "GrabHealth Team"; 
+                    mailOptions.to = manager.email;
                     transporter.sendMail(mailOptions, function(error, info){
                         if (error) {
                         console.log(error);
+                        Manager.findByIdAndDelete(manager._id);
+                        Clinic.findByIdAndDelete(clinic._id);
+                        return res.json({success: false, msg: "Failed to send email"});
                         } else {
                         console.log('Email sent: ' + info.response);
                         }

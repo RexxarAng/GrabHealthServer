@@ -57,7 +57,7 @@ module.exports.addClinic = function(newClinic, callback) {
       
 }
 
-ClinicSchema.plugin(uniqueValidator, { message: "Error: {PATH} is already exists. "});
+ClinicSchema.plugin(uniqueValidator, { message: "is already taken. "});
 
 // Clinic.schema.path('name').validate(function (value, respond) {
 //     Clinic.findOne({ name: value}, function (err, clinic) {

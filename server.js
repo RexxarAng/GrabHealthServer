@@ -10,9 +10,8 @@ const config = require("./config/database")
 const routes = require("./routes/routes")
 //const passport = require('passport');
 
-mongoose.connect(config.database, {useNewUrlParser: true });
+mongoose.connect(config.database, {useNewUrlParser: true, useCreateIndex: true });
 mongoose.Promise = global.Promise;
-mongoose.set('useCreateIndex', true);
 
 mongoose.connection.on('connected', () => {
     console.log("Connected to database " + config.database)
@@ -38,8 +37,10 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.use('/routes', routes);
 
 //Passport Middleware
-//app.use(passport.initialize());
-//app.use(passport.session());
+app.use(passport.initialize());
+app.use(passport.session());
+
+require('./config/passport')(passport);
 
 //Prevent nosql injection
 app.use(mongoSanitize({
