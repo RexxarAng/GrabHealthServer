@@ -2,11 +2,11 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 const ReceptionistSchema = mongoose.Schema({
-    firstname: {
+    firstName: {
         type: String,
         required: true
     },
-    lastname: {
+    lastName: {
         type: String,
         required: true
     },
@@ -14,7 +14,7 @@ const ReceptionistSchema = mongoose.Schema({
         type: String,
         required: true
     },
-    ic: {
+    nric: {
         type: String,
         required: true
     },
@@ -22,6 +22,11 @@ const ReceptionistSchema = mongoose.Schema({
         type: String,
         required: true
     },
+    role: {
+        type: String,
+        required: true,
+        default: 'Receptionist'
+    }
 });
 
 const Receptionist = module.exports = mongoose.model('Receptionist', ReceptionistSchema);

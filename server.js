@@ -6,8 +6,12 @@ const https = require('https');
 const passport = require('passport')
 const mongoose = require('mongoose');
 const mongoSanitize = require('express-mongo-sanitize');
-const config = require("./config/database")
-const routes = require("./routes/routes")
+const config = require("./config/database");
+const routes = require("./routes/routes");
+const doctor = require("./routes/doctor");
+const manager = require("./routes/manager");
+const receptionist = require("./routes/receptionist");
+const admin = require("./routes/admin");
 //const passport = require('passport');
 
 mongoose.connect(config.database, {useNewUrlParser: true, useCreateIndex: true });
@@ -34,7 +38,20 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 
-app.use('/routes', routes);
+//Default route
+app.use('/', routes);
+
+//Doctor route
+app.use('/doctor', doctor);
+
+//Manager route
+app.use('/manager', manager);
+
+//Receptionist route
+app.use('/receptionist', receptionist);
+
+//Admin route
+app.use('/admin', admin);
 
 //Passport Middleware
 app.use(passport.initialize());

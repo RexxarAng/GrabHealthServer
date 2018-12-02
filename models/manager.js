@@ -47,6 +47,11 @@ const ManagerSchema = mongoose.Schema({
     clinic: {
         type: Schema.Types.ObjectId,
         ref: 'Clinic'
+    },
+    role: {
+        type: String,
+        required: true,
+        default: 'Receptionist'
     }
 
 });
@@ -54,7 +59,7 @@ const ManagerSchema = mongoose.Schema({
 const Manager = module.exports = mongoose.model('Manager', ManagerSchema);
 
 module.exports.getUserById = function(id, callback) {
-    Manager.findById(id, callback);
+    Manager.findById(id, {password: 0}, callback);
 }
 
 module.exports.getUserByNric = function(nric, callback) {
