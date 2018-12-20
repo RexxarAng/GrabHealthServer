@@ -10,16 +10,34 @@ const ReceptionistSchema = mongoose.Schema({
         type: String,
         required: true
     },
-    email: {
+    nric: {
         type: String,
         required: true
     },
-    nric: {
+    email: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    password: {
+        type: String,
+        required: true
+    },  
+    contactNo: {
+        type: Number,
+        required: true
+    },
+    address: {
         type: String,
         required: true
     },
     password: {
         type: String,
+        required: true
+    },
+    clinic: {
+        type: Schema.Types.ObjectId,
+        ref: 'Clinic',
         required: true
     },
     role: {

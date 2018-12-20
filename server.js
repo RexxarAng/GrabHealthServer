@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const helmet = require('helmet');
 const https = require('https');
+const multer = require('multer');
 const passport = require('passport')
 const mongoose = require('mongoose');
 const mongoSanitize = require('express-mongo-sanitize');
@@ -12,7 +13,7 @@ const doctor = require("./routes/doctor");
 const manager = require("./routes/manager");
 const receptionist = require("./routes/receptionist");
 const admin = require("./routes/admin");
-//const passport = require('passport');
+const bodyCleaner = require('express-body-cleaner');
 
 mongoose.connect(config.database, {useNewUrlParser: true, useCreateIndex: true });
 mongoose.Promise = global.Promise;
@@ -25,19 +26,17 @@ mongoose.connection.on('error', (err) => {
     console.log('Database error: ' + err);
 });
 
-
 const app = express();
-
 const port = 4560;
 
 app.use(helmet());
 app.use(cors());
-
+ 
 //Body Parser MiddeWare
 //Parse application/json
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
-
+app.use(bodyCleaner);
 //Default route
 app.use('/', routes);
 

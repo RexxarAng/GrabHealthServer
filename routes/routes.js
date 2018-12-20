@@ -10,7 +10,6 @@ const Manager = require("../models/manager");
 const nodemailer = require('nodemailer');
 const Validator = require('../validation/validation');
 const smtpTransport = require('nodemailer-smtp-transport');
-const Admin = require('../models/admin');
 var transporter = nodemailer.createTransport(smtpTransport({
     service: 'gmail',
     auth: {
@@ -30,9 +29,13 @@ var transporter = nodemailer.createTransport(smtpTransport({
   };
 
 router.post('/authenticate', (req, res, next) => {
+    console.log(req.body);
     var role = req.body.role;
     const email = req.body.email;
     const password = req.body.password;
+    if (password == undefined || password.length == 0) {
+        return res.status(404).json({success: false, msg: "Invalid username or password"})
+    }
     var currentRole;
     if(role == "Manager"){
         currentRole = Manager;
@@ -40,16 +43,16 @@ router.post('/authenticate', (req, res, next) => {
         currentRole = Receptionist;
     } else if (role == "Doctor") {
         curentRole = Doctor;
-    } else if (role == "Admin") {
-        currentRole = Admin;
-    }
-    else {
-        return res.json({success: false, msg: "Invalid role."})
+    } else {
+        return res.status(404).json({success: false, msg: "Invalid role."})
     }
     currentRole.getUserByEmail(email ,(err, user) => {
-        if(err) return res.json({success: false, msg: "Cannot do it"});
+        if(err) {
+            console.log(err);
+            return res.status(400).json({success: false, msg: "Something hapepned"});
+        }
         if(!user){
-            return res.json({success: false, msg: "Invalid email or password entered."});
+            return res.status(404).json({success: false, msg: "Invalid email or password entered."});
         }
         currentRole.comparePassword(password, user.password, (err, isMatch) => {
             if(err) throw err;
@@ -77,11 +80,13 @@ router.post('/authenticate', (req, res, next) => {
                     }
                 });
             } else {
-                return res.json({success: false, msg: 'Invalid email or password entered.'})
+                return res.status(404).json({success: false, msg: "Invalid email or password entered."});
             }
         });
     });
 });
+
+
 
 // router.post('/createAdmin', (req, res, next) => {
 //     let newAdmin = new Admin({

@@ -51,7 +51,7 @@ const ManagerSchema = mongoose.Schema({
     role: {
         type: String,
         required: true,
-        default: 'Receptionist'
+        default: 'Manager'
     }
 
 });

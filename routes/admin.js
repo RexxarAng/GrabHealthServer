@@ -9,6 +9,8 @@ const passport = require('passport');
 const nodemailer = require('nodemailer');
 const Validator = require('../validation/validation');
 const smtpTransport = require('nodemailer-smtp-transport');
+const jwt = require('jsonwebtoken');
+const config = require('../config/database');
 
 
 var transporter = nodemailer.createTransport(smtpTransport({
@@ -38,6 +40,67 @@ isAdmin = function(req, res, next){
         res.json({success: false, msg: "Permission denied!"})
     }
 }
+
+router.post('/authenticate', (req, res, next) => {
+    console.log(req.body);
+    var role = req.body.role;
+    const email = req.body.email;
+    const password = req.body.password;
+    if (password == undefined || password.length == 0) {
+        return res.status(404).json({success: false, msg: "Invalid username or password"})
+    }
+
+    Admin.getUserByEmail(email ,(err, user) => {
+        if(err) {
+            console.log(err);
+            return res.status(400).json({success: false, msg: "Something hapepned"});
+        }
+        if(!user){
+            return res.status(404).json({success: false, msg: "Invalid email or password entered."});
+        }
+        Admin.comparePassword(password, user.password, (err, isMatch) => {
+            if(err) throw err;
+            if(isMatch){
+                user.password = undefined;
+                user.contactNo = undefined;
+                console.log(user);
+                const token = jwt.sign(JSON.parse(JSON.stringify(user)), config.secret, {
+                    expiresIn: 3600 
+                });
+
+                res.json({
+                    success: true,
+                    token: 'JWT ' + token,  
+                    user: {
+                        id: user._id,
+                        email: user.email,
+                        role: role
+                    }
+                });
+            } else {
+                return res.status(404).json({success: false, msg: "Invalid email or password entered."});
+            }
+        });
+    });
+});
+//Create the admin for your database
+router.post('/createFirstAdmin', (req, res, next) => {
+    let newAdmin = new Admin({
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+        email: req.body.email,
+        password: req.body.password,
+        contactNo: req.body.contactNo
+    });
+
+    Admin.addUser(newAdmin, (err, admin) => {
+        if(err){
+            return res.json({success: false, msg: err});
+        } else {
+            return res.json({success: true, msg: "Admin created"});
+        }
+    });
+});
 
 router.post('/createAdmin', [passport.authenticate('jwt', {session:false}), isAdmin], (req, res, next) => {
     let newAdmin = new Admin({
@@ -122,6 +185,14 @@ router.post('/clinic/register', [passport.authenticate('jwt', {session:false}), 
             });
         }
     })
+});
+
+router.get("/clinicList", [passport.authenticate('jwt', {session:false}), isAdmin], (req, res, next) => {
+    Clinic.find({})
+        .populate({ path: 'clinicManager', select: 'firstName lastName email _id address contactNo' })
+        .exec(function (err, clinics){
+            res.send(clinics).status(201);
+        }) 
 });
 
 module.exports = router;
