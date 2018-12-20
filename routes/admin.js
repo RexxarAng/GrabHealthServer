@@ -33,7 +33,6 @@ var mailOptions = {
 
 
 isAdmin = function(req, res, next){
-    console.log(req.user);
     if(req.user.role == 'Admin') {
         next();
     } else {
@@ -42,7 +41,6 @@ isAdmin = function(req, res, next){
 }
 
 router.post('/authenticate', (req, res, next) => {
-    console.log(req.body);
     var role = req.body.role;
     const email = req.body.email;
     const password = req.body.password;
@@ -63,7 +61,6 @@ router.post('/authenticate', (req, res, next) => {
             if(isMatch){
                 user.password = undefined;
                 user.contactNo = undefined;
-                console.log(user);
                 const token = jwt.sign(JSON.parse(JSON.stringify(user)), config.secret, {
                     expiresIn: 3600 
                 });

@@ -2,11 +2,13 @@ const express = require('express');
 const router = express.Router();
 const Manager = require("../models/manager");
 const Clinic = require("../models/clinic");
+const Doctor = require("../models/doctor");
 const Receptionist = require("../models/receptionist");
 const passport = require('passport');
 const nodemailer = require('nodemailer');
 const smtpTransport = require('nodemailer-smtp-transport');
 const Validator = require('../validation/validation');
+const password = require('secure-random-password');
 
 var transporter = nodemailer.createTransport(smtpTransport({
     service: 'gmail',
@@ -35,48 +37,45 @@ isManager = function(req, res, next){
 }
 
 router.post('/register/receptionist', [passport.authenticate('jwt', {session:false}), isManager], (req, res, next) => { 
-    clinic;
-    if(!Validator.validateNric(req.body.receptionist.nric)){
+    if(!Validator.validateNric(req.body.nric)){
         return res.json({success:false, msg: "invalid ic number!"});
     };
-    if(!Validator.validateEmail(req.body.receptionist.email)) {
+    if(!Validator.validateEmail(req.body.email)) {
         return res.json({success:false, msg: "invalid email format" })
     };
-    Manager.findOne({ email: req.body.email })
+    Manager.findOne({ email: req.user.email })
         .populate({path: 'clinic', select: '-clinicLicenseNo'})
         .exec(function(err, manager){
             if(err){
                 return res.json({success: false, msg: err});
             } else {
-                clinic = manager.clinic;
                 var randomPassword = password.randomPassword({ characters: password.lower + password.upper + password.digits });
                 let newReceptionist = new Receptionist({
-                    firstName: req.body.receptionist.firstName,
-                    lastName: req.body.manager.lastName,
-                    nric: req.body.receptionist.nric,
-                    address: req.body.receptionist.address,
-                    email: req.body.receptionist.email,
+                    firstName: req.body.firstName,
+                    lastName: req.body.lastName,
+                    nric: req.body.nric,
+                    address: req.body.address,
+                    email: req.body.email,
                     password: randomPassword,
-                    contactNo: req.body.receptionist.contactNo,
-                    clinic : clinic._id
+                    contactNo: req.body.contactNo,
+                    clinic : manager.clinic._id
                 });
                 Receptionist.addUser(newReceptionist, (err, receptionist) => {
                     if(err){
                         return res.json({success: false, msg: err});
                     } else {
-                        mailOptions.subject = "You have been added to " + clinic;
-                        mailOptions.text = "Dear " + manager.firstName + " " + manager.lastName + ", \n\n" + 
-                            "Thank you for your application. We are pleased to inform you that you have successfully registered your clinic with us.\n\n" +
-                            "Your login email will be " + manager.email + " and the password will be " + randomPassword + ". \n\n" +
+                        mailOptions.subject = "You have been added to " + manager.clinic.name;
+                        mailOptions.text = "Dear " + receptionist.firstName + " " + receptionist.lastName + ", \n\n" + 
+                            "We are pleased to inform you that your account with the role of receptionist has been successfully created\n\n" +
+                            "Your login email will be " + receptionist.email + " and the password will be " + randomPassword + ". \n\n" +
                             "We look forward to an enjoyable partnership with you and your clinic. \n\n" +
                             "Best regards, \n" +
                             "GrabHealth Team"; 
-                        mailOptions.to = manager.email;
+                        mailOptions.to = receptionist.email;
                         transporter.sendMail(mailOptions, function(error, info){
                             if (error) {
                                 console.log(error);
-                                Manager.findByIdAndDelete(manager._id);
-                                Clinic.findByIdAndDelete(clinic._id);
+                                Receptionist.findByIdAndDelete(receptionist._id);
                                 return res.json({success: false, msg: "Failed to send email"});
                             } else {
                                 console.log('Email sent: ' + info.response);
@@ -88,8 +87,61 @@ router.post('/register/receptionist', [passport.authenticate('jwt', {session:fal
             }
         })
      
-    });
-    
+});
+
+router.post('/register/doctor', [passport.authenticate('jwt', {session:false}), isManager], (req, res, next) => { 
+    if(!Validator.validateNric(req.body.nric)){
+        return res.json({success:false, msg: "invalid ic number!"});
+    };
+    if(!Validator.validateEmail(req.body.email)) {
+        return res.json({success:false, msg: "invalid email format" })
+    };
+    Manager.findOne({ email: req.user.email })
+        .populate({path: 'clinic', select: '-clinicLicenseNo'})
+        .exec(function(err, manager){
+            if(err){
+                return res.json({success: false, msg: err});
+            } else {
+                var randomPassword = password.randomPassword({ characters: password.lower + password.upper + password.digits });
+                let newDoctor = new Doctor({
+                    firstName: req.body.firstName,
+                    lastName: req.body.lastName,
+                    nric: req.body.nric,
+                    address: req.body.address,
+                    email: req.body.email,
+                    password: randomPassword,
+                    contactNo: req.body.contactNo,
+                    doctorLicenseNo: req.body.doctorLicenseNo,
+                    clinic : manager.clinic._id
+                });
+                Doctor.addUser(newDoctor, (err, doctor) => {
+                    if(err){
+                        return res.json({success: false, msg: err});
+                    } else {
+                        mailOptions.subject = "You have been added to " + manager.clinic.name;
+                        mailOptions.text = "Dear " + doctor.firstName + " " + doctor.lastName + ", \n\n" + 
+                            "We are pleased to inform you that your account with the role of doctor has been successfully created\n\n" +
+                            "Your login email will be " + doctor.email + " and the password will be " + randomPassword + ". \n\n" +
+                            "We look forward to an enjoyable partnership with you and your clinic. \n\n" +
+                            "Best regards, \n" +
+                            "GrabHealth Team"; 
+                        mailOptions.to = doctor.email;
+                        transporter.sendMail(mailOptions, function(error, info){
+                            if (error) {
+                                console.log(error);
+                                Doctor.findByIdAndDelete(doctor._id);
+                                return res.json({success: false, msg: "Failed to send email"});
+                            } else {
+                                console.log('Email sent: ' + info.response);
+                            }
+                        });
+                        return res.json({success: true, msg: "Doctor created"})
+                    }
+                });
+            }
+        })
+     
+});
 
 router.get('/profile', [passport.authenticate('jwt', {session:false}), isManager], (req, res, next) => {
     req.user.password = undefined;
