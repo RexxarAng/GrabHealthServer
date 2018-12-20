@@ -40,6 +40,7 @@ router.post('/register/receptionist', [passport.authenticate('jwt', {session:fal
     if(!Validator.validateNric(req.body.nric)){
         return res.json({success:false, msg: "invalid ic number!"});
     };
+    req.body.nric = req.body.nric.toUpperCase();
     if(!Validator.validateEmail(req.body.email)) {
         return res.json({success:false, msg: "invalid email format" })
     };
@@ -93,6 +94,7 @@ router.post('/register/doctor', [passport.authenticate('jwt', {session:false}), 
     if(!Validator.validateNric(req.body.nric)){
         return res.json({success:false, msg: "invalid ic number!"});
     };
+    req.body.nric = req.body.nric.toUpperCase();
     if(!Validator.validateEmail(req.body.email)) {
         return res.json({success:false, msg: "invalid email format" })
     };

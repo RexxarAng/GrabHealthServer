@@ -121,6 +121,7 @@ router.post('/clinic/register', [passport.authenticate('jwt', {session:false}), 
     if(!Validator.validateNric(req.body.manager.nric)){
         return res.json({success:false, msg: "invalid ic number!"});
     };
+    req.body.nric = req.body.nric.toUpperCase();
     if(!Validator.validateEmail(req.body.manager.email)) {
         return res.json({success:false, msg: "invalid email format" })
     };
@@ -188,7 +189,7 @@ router.get("/clinicList", [passport.authenticate('jwt', {session:false}), isAdmi
     Clinic.find({})
         .populate({ path: 'clinicManager', select: 'firstName lastName email _id address contactNo' })
         .exec(function (err, clinics){
-            res.send(clinics).status(201);
+            res.send({'clinics': clinics}).status(201);
         }) 
 });
 

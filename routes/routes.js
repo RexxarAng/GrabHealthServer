@@ -7,6 +7,7 @@ const config = require('../config/database');
 const Doctor = require('../models/doctor');
 const Receptionist = require("../models/receptionist");
 const Manager = require("../models/manager");
+const Admin = require("../models/admin");
 const nodemailer = require('nodemailer');
 const Validator = require('../validation/validation');
 const smtpTransport = require('nodemailer-smtp-transport');
@@ -88,22 +89,22 @@ router.post('/authenticate', (req, res, next) => {
 
 
 
-// router.post('/createAdmin', (req, res, next) => {
-//     let newAdmin = new Admin({
-//         firstName: req.body.firstName,
-//         lastName: req.body.lastName,
-//         email: req.body.email,
-//         password: req.body.password,
-//         contactNo: req.body.contactNo
-//     });
+router.post('/createAdmin', (req, res, next) => {
+    let newAdmin = new Admin({
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+        email: req.body.email,
+        password: req.body.password,
+        contactNo: req.body.contactNo
+    });
 
-//     Admin.addUser(newAdmin, (err, admin) => {
-//         if(err){
-//             return res.json({success: false, msg: err});
-//         } else {
-//             return res.json({success: true, msg: "Admin created"});
-//         }
-//     });
-// });
+    Admin.addUser(newAdmin, (err, admin) => {
+        if(err){
+            return res.json({success: false, msg: err});
+        } else {
+            return res.json({success: true, msg: "Admin created"});
+        }
+    });
+});
 
 module.exports = router;
