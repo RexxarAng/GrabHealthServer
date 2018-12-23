@@ -40,10 +40,10 @@ router.post('/register/receptionist', [passport.authenticate('jwt', {session:fal
     if(!Validator.validateNric(req.body.nric)){
         return res.json({success:false, msg: "invalid ic number!"});
     };
-    req.body.nric = req.body.nric.toUpperCase();
     if(!Validator.validateEmail(req.body.email)) {
         return res.json({success:false, msg: "invalid email format" })
     };
+    req.body.email = req.body.email.toLocaleLowerCase();
     Manager.findOne({ email: req.user.email })
         .populate({path: 'clinic', select: '-clinicLicenseNo'})
         .exec(function(err, manager){
@@ -94,10 +94,10 @@ router.post('/register/doctor', [passport.authenticate('jwt', {session:false}), 
     if(!Validator.validateNric(req.body.nric)){
         return res.json({success:false, msg: "invalid ic number!"});
     };
-    req.body.nric = req.body.nric.toUpperCase();
     if(!Validator.validateEmail(req.body.email)) {
         return res.json({success:false, msg: "invalid email format" })
     };
+    req.body.email = req.body.email.toLocaleLowerCase();
     Manager.findOne({ email: req.user.email })
         .populate({path: 'clinic', select: '-clinicLicenseNo'})
         .exec(function(err, manager){
@@ -156,6 +156,16 @@ router.get('/profile', [passport.authenticate('jwt', {session:false}), isManager
             return res.json({user: req.user, clinic: clinic});
         }
     })
+});
+
+router.get('/clinic/team', [passport.authenticate('jwt', {session:false}), isManager], (req, res, next) => {
+    Receptionist.find({ clinic: req.user.clinic})
+        .select('-password').exec(function (err, receptionists){
+            Doctor.find({ clinic: req.user.clinic})
+                .select('-password').exec(function (err, doctors){
+                    res.send({'receptionists': receptionists, 'doctors': doctors}).status(201);
+                });
+        }); 
 });
 
 module.exports = router;

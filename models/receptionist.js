@@ -10,11 +10,12 @@ const ReceptionistSchema = mongoose.Schema({
     },
     lastName: {
         type: String,
-        required: true
+        required: true,
     },
     nric: {
         type: String,
-        required: true
+        required: true,
+        unique: true
     },
     email: {
         type: String,

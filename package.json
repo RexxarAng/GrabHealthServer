@@ -2,13 +2,14 @@
   "name": "express-server",
   "version": "1.0.0",
   "description": "",
-  "main": "sever.js",
+  "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "axios": "^0.18.0",
     "bcryptjs": "*",
     "body-parser": "*",
     "cors": "*",
@@ -26,6 +27,8 @@
     "nodemailer-smtp-transport": "^2.7.4",
     "passport": "*",
     "passport-jwt": "*",
-    "secure-random-password": "^0.1.0"
+    "qrcode": "^1.3.2",
+    "secure-random-password": "^0.1.0",
+    "speakeasy": "^2.0.0"
   }
 }
