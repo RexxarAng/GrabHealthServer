@@ -9,7 +9,7 @@ isReceptionist = function(req, res, next){
     if(req.user.role == 'Receptionist') {
         next();
     } else {
-        res.json({success: false, msg: "Permission denied!"})
+        res.json({success: false, unauthenticated: true, msg: "Permission denied!"})
     }
 }
 

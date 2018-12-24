@@ -37,7 +37,7 @@ isAdmin = function(req, res, next){
     if(req.user.role == 'Admin') {
         next();
     } else {
-        res.json({success: false, msg: "Permission denied!"})
+        res.json({success: false, unauthenticated: true, msg: "Permission denied!"})
     }
 }
 
@@ -45,7 +45,6 @@ router.post('/authenticate2FA', (req, res) => {
     const email = req.body.email;
     const password = req.body.password;
     const userToken = req.body.token;
-    console.log(req.body);
     if (password == undefined || password.length == 0) {
         return res.status(404).json({success: false, msg: "Invalid username or password"})
     }
@@ -75,11 +74,9 @@ router.post('/authenticate2FA', (req, res) => {
                     var verified = speakeasy.totp.verify({ 
                         secret: base32secret,
                         encoding: 'base32',
-                        token: userToken,
-                        window: 2 
+                        token: userToken
                     });
                     if(verified) {
-                        console.log(user.key);
                         if(user.key === '') {
                             user.key = user.tempKey;
                             user.save();
