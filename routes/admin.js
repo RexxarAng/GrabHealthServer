@@ -14,6 +14,32 @@ const config = require('../config/database');
 const axios = require('axios');
 var speakeasy = require("speakeasy");
 var QRCode = require('qrcode');
+var crypto = require('crypto');
+const passwordModule = require('secure-random-password');
+
+algorithm = 'aes-256-gcm';
+secretKey = 'D87314A83ABFB2312CF8F5386F62A6VS';
+// do not use a global iv for production, 
+// generate a new one for each encryption
+
+function encrypt(text, iv) {
+  var cipher = crypto.createCipheriv(algorithm, secretKey, iv)
+  var encrypted = cipher.update(text, 'utf8', 'hex')
+  encrypted += cipher.final('hex');
+  var tag = cipher.getAuthTag();
+  return {
+    content: encrypted,
+    tag: tag
+  };
+}
+
+function decrypt(encryptedContent, iv, tag) {
+  var decipher = crypto.createDecipheriv(algorithm, secretKey, iv)
+  decipher.setAuthTag(tag);
+  var dec = decipher.update(encryptedContent, 'hex', 'utf8')
+  dec += decipher.final('utf8');
+  return dec;
+}
 
 var transporter = nodemailer.createTransport(smtpTransport({
     service: 'gmail',
@@ -61,7 +87,11 @@ router.post('/authenticate2FA', (req, res) => {
             if(isMatch){
                 if(!user.twoFA) {
                     var secret = speakeasy.generateSecret();
-                    user.tempKey = secret.base32;
+                    var randomIv = passwordModule.randomPassword({ length: 13, characters: passwordModule.lower + passwordModule.upper + passwordModule.digits });
+                    var resultEncrypted = encrypt(secret.base32, randomIv);
+                    user.tempKey.secret =  resultEncrypted.content;
+                    user.tempKey.iv = randomIv;
+                    user.tempKey.tag = resultEncrypted.tag;
                     user.twoFA = true;
                     user.save();
                     QRCode.toDataURL(secret.otpauth_url, function(err, data_url) {
@@ -70,15 +100,16 @@ router.post('/authenticate2FA', (req, res) => {
                 } else if(!userToken || userToken === ''){
                     return res.json({success: true, msg: "Show token field", verify: true});
                 } else {
-                    var base32secret = user.tempKey;
+                    var base32secret = decrypt(user.tempKey.secret, user.tempKey.iv, user.tempKey.tag);
+                    console.log(base32secret);
                     var verified = speakeasy.totp.verify({ 
                         secret: base32secret,
                         encoding: 'base32',
                         token: userToken
                     });
                     if(verified) {
-                        if(user.key === '') {
-                            user.key = user.tempKey;
+                        if(user.key.secret === '') {
+                            user.key.secret = user.tempKey.secret;
                             user.save();
                         }
                         let signedUser = new Admin(user);

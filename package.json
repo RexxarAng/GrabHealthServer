@@ -13,6 +13,7 @@
     "bcryptjs": "*",
     "body-parser": "*",
     "cors": "*",
+    "crypto": "^1.0.1",
     "express": "*",
     "express-body-cleaner": "^1.0.1",
     "express-mongo-sanitize": "*",
