@@ -16,7 +16,6 @@
     "express-body-cleaner": "^1.0.1",
     "express-mongo-sanitize": "*",
     "helmet": "*",
-    "image-watermark": "0.0.7",
     "jsonwebtoken": "*",
     "lodash": "^4.17.11",
     "mongoose": "^5.3.13",
@@ -27,7 +26,6 @@
     "nodemailer-smtp-transport": "^2.7.4",
     "passport": "*",
     "passport-jwt": "*",
-    "secure-random-password": "^0.1.0",
-    "watermarkjs": "^2.0.0"
+    "secure-random-password": "^0.1.0"
   }
 }

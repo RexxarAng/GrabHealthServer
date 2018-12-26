@@ -2,6 +2,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const helmet = require('helmet');
+const https = require('https');
+const multer = require('multer');
 const passport = require('passport')
 const mongoose = require('mongoose');
 const mongoSanitize = require('express-mongo-sanitize');
@@ -54,7 +56,6 @@ app.use('/admin', admin);
 app.use(passport.initialize());
 app.use(passport.session());
 
-
 require('./config/passport')(passport);
 
 //Prevent nosql injection
@@ -67,12 +68,12 @@ var http = require('http').Server(app);
 
 
 
-app.use(function (req, res, next) {
+app.use((req, res, next) => {
     //set headers to allow cross origin request.
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header('Access-Control-Allow-Methods', 'PUT, GET, POST, DELETE, OPTIONS');
-    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-    next();
+        res.header("Access-Control-Allow-Origin", "*");
+        res.header('Access-Control-Allow-Methods', 'PUT, GET, POST, DELETE, OPTIONS');
+        res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+        next();
 });
 
 
