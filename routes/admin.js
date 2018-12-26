@@ -11,7 +11,35 @@ const Validator = require('../validation/validation');
 const smtpTransport = require('nodemailer-smtp-transport');
 const jwt = require('jsonwebtoken');
 const config = require('../config/database');
+const axios = require('axios');
+var speakeasy = require("speakeasy");
+var QRCode = require('qrcode');
+var crypto = require('crypto');
+const passwordModule = require('secure-random-password');
 
+algorithm = 'aes-256-gcm';
+secretKey = 'D87314A83ABFB2312CF8F5386F62A6VS';
+// do not use a global iv for production, 
+// generate a new one for each encryption
+
+function encrypt(text, iv) {
+  var cipher = crypto.createCipheriv(algorithm, secretKey, iv)
+  var encrypted = cipher.update(text, 'utf8', 'hex')
+  encrypted += cipher.final('hex');
+  var tag = cipher.getAuthTag();
+  return {
+    content: encrypted,
+    tag: tag
+  };
+}
+
+function decrypt(encryptedContent, iv, tag) {
+  var decipher = crypto.createDecipheriv(algorithm, secretKey, iv)
+  decipher.setAuthTag(tag);
+  var dec = decipher.update(encryptedContent, 'hex', 'utf8')
+  dec += decipher.final('utf8');
+  return dec;
+}
 
 var transporter = nodemailer.createTransport(smtpTransport({
     service: 'gmail',
@@ -31,16 +59,169 @@ var mailOptions = {
     text: 'Enter text'
 };
 
-
 isAdmin = function(req, res, next){
     if(req.user.role == 'Admin') {
         next();
     } else {
-        res.json({success: false, msg: "Permission denied!"})
+        res.json({success: false, unauthenticated: true, msg: "Permission denied!"})
     }
 }
 
-router.post('/authenticate', (req, res, next) => {
+router.post('/authenticate2FA', (req, res) => {
+    const email = req.body.email;
+    const password = req.body.password;
+    const userToken = req.body.token;
+    if (password == undefined || password.length == 0) {
+        return res.status(404).json({success: false, msg: "Invalid username or password"})
+    }
+    Admin.getUserByEmail(email ,(err, user) => {
+        if(err) {
+            console.log(err);
+            return res.status(400).json({success: false, msg: "Something happened"});
+        }
+        if(!user){
+            return res.status(404).json({success: false, msg: "Invalid email or password entered."});
+        }
+        Admin.comparePassword(password, user.password, (err, isMatch) => {
+            if(err) throw err;
+            if(isMatch){
+                if(!user.twoFA) {
+                    var secret = speakeasy.generateSecret();
+                    var randomIv = passwordModule.randomPassword({ length: 13, characters: passwordModule.lower + passwordModule.upper + passwordModule.digits });
+                    var resultEncrypted = encrypt(secret.base32, randomIv);
+                    user.tempKey.secret =  resultEncrypted.content;
+                    user.tempKey.iv = randomIv;
+                    user.tempKey.tag = resultEncrypted.tag;
+                    user.twoFA = true;
+                    user.save();
+                    QRCode.toDataURL(secret.otpauth_url, function(err, data_url) {
+                        return res.json({success: true, msg: "QRCODE URL sent", setup: true, data: data_url});
+                    });
+                } else if(!userToken || userToken === ''){
+                    return res.json({success: true, msg: "Show token field", verify: true});
+                } else {
+                    var base32secret = decrypt(user.tempKey.secret, user.tempKey.iv, user.tempKey.tag);
+                    console.log(base32secret);
+                    var verified = speakeasy.totp.verify({ 
+                        secret: base32secret,
+                        encoding: 'base32',
+                        token: userToken
+                    });
+                    if(verified) {
+                        if(user.key.secret === '') {
+                            user.key.secret = user.tempKey.secret;
+                            user.save();
+                        }
+                        let signedUser = new Admin(user);
+                        signedUser.password = undefined;
+                        signedUser.contactNo = undefined;
+                        const token = jwt.sign(JSON.parse(JSON.stringify(signedUser)), config.secret, {
+                            expiresIn: 3600 
+                        });
+                        return res.json({
+                            success: true,
+                            authenticated: true,
+                            token: 'JWT ' + token,  
+                            user: {
+                                id: user._id,
+                                email: user.email,
+                                role: 'Admin'                    
+                            }
+                        });
+                    } else {
+                        if(user.key === '') {
+                            user.twoFA = false;
+                            user.save();
+                        }
+                        
+                        return res.json({success: false, msg: "Unable to authenticate 2FA"})
+                    }     
+                }
+           
+            } else {
+                return res.status(404).json({success: false, msg: "Invalid email or password entered."});
+            }
+        });
+    });
+});
+
+router.post('/totp-set-up', (req, res) => {
+    Admin.getUserByEmail(req.body.email ,(err, admin) => {
+        if(err) {
+            console.log(err);
+            return res.status(400).json({success: false, msg: "Something happened"});
+        }
+        if(!user){
+            return res.status(404).json({success: false, msg: "Invalid email or password entered."});
+        }
+        Admin.comparePassword(password, user.password, (err, isMatch) => {
+            if(err) throw err;
+            if(isMatch){
+                var secret = speakeasy.generateSecret();
+                admin.tempKey = secret.base32;
+                admin.save();
+                QRCode.toDataURL(secret.otpauth_url, function(err, data_url) {
+                    res.json({success: true, msg: "QRCODE URL sent", data: data_url})
+                });
+
+                
+            } else {
+                return res.status(404).json({success: false, msg: "Invalid email or password entered."});
+            }
+    
+        });
+
+    });
+});
+
+router.post('/verify-totp', (req, res) => {
+    var userToken = req.body.token;
+    Admin.getUserByEmail(req.body.email ,(err, admin) => {
+        if(err) {
+            console.log(err);
+            return res.status(400).json({success: false, msg: "Something happened"});
+        }
+        if(!user){
+            return res.status(404).json({success: false, msg: "Invalid email or password entered."});
+        }
+        Admin.comparePassword(password, user.password, (err, isMatch) => {
+            if(err) throw err;
+            if(isMatch){
+                var base32secret = user.tempKey;
+                var verified = speakeasy.totp.verify({ 
+                    secret: base32secret,
+                    encoding: 'base32',
+                    token: userToken 
+                });
+                if (verified) {
+                    if(user.key === '') {
+                        user.key = user.tempKey;
+                        user.save();
+                    }
+                    user.password = undefined;
+                    user.contactNo = undefined;
+                    const token = jwt.sign(JSON.parse(JSON.stringify(user)), config.secret, {
+                        expiresIn: 3600 
+                    });
+                    res.json({
+                        success: true,
+                        token: 'JWT ' + token,  
+                        user: {
+                            id: user._id,
+                            email: user.email,
+                            role: role                    }
+                    });
+                } 
+            } else {
+                return res.status(404).json({success: false, msg: "Invalid email or password entered."});
+            }
+    
+        });
+
+    });
+});
+
+router.post('/authenticate', (req, res) => {
     var role = req.body.role;
     const email = req.body.email;
     const password = req.body.password;
@@ -51,11 +232,12 @@ router.post('/authenticate', (req, res, next) => {
     Admin.getUserByEmail(email ,(err, user) => {
         if(err) {
             console.log(err);
-            return res.status(400).json({success: false, msg: "Something hapepned"});
+            return res.status(400).json({success: false, msg: "Something happened"});
         }
         if(!user){
             return res.status(404).json({success: false, msg: "Invalid email or password entered."});
         }
+        
         Admin.comparePassword(password, user.password, (err, isMatch) => {
             if(err) throw err;
             if(isMatch){
@@ -64,15 +246,13 @@ router.post('/authenticate', (req, res, next) => {
                 const token = jwt.sign(JSON.parse(JSON.stringify(user)), config.secret, {
                     expiresIn: 3600 
                 });
-
                 res.json({
                     success: true,
                     token: 'JWT ' + token,  
                     user: {
                         id: user._id,
                         email: user.email,
-                        role: role
-                    }
+                        role: role                    }
                 });
             } else {
                 return res.status(404).json({success: false, msg: "Invalid email or password entered."});
@@ -107,7 +287,6 @@ router.post('/createAdmin', [passport.authenticate('jwt', {session:false}), isAd
         password: req.body.password,
         contactNo: req.body.contactNo
     });
-
     Admin.addUser(newAdmin, (err, admin) => {
         if(err){
             return res.json({success: false, msg: err});
@@ -121,10 +300,10 @@ router.post('/clinic/register', [passport.authenticate('jwt', {session:false}), 
     if(!Validator.validateNric(req.body.manager.nric)){
         return res.json({success:false, msg: "invalid ic number!"});
     };
-    req.body.nric = req.body.nric.toUpperCase();
     if(!Validator.validateEmail(req.body.manager.email)) {
         return res.json({success:false, msg: "invalid email format" })
     };
+    req.body.manager.email = req.body.manager.email.toLocaleLowerCase();
     var randomPassword = password.randomPassword({ characters: password.lower + password.upper + password.digits });
     let newManager = new Manager({
         firstName: req.body.manager.firstName,
@@ -168,7 +347,24 @@ router.post('/clinic/register', [passport.authenticate('jwt', {session:false}), 
                         "GrabHealth Team"; 
                     mailOptions.to = manager.email;
                     transporter.sendMail(mailOptions, function(error, info){
-                        if (error) {
+                        externalFail = false;
+                        axios.post('http://localhost:4000/GrabHealthWeb/createClinic', {
+                            name: req.body.clinic.name,
+                            address: req.body.clinic.address,
+                            location: req.body.clinic.location,
+                            contactNo: req.body.clinic.contactNo,
+                            clinicPhoto: req.body.clinic.clinicPhoto,
+                            clinicLicenseNo: req.body.clinic.clinicLicenseNo
+                        })
+                        .then((res) => {
+                            if(!res['success'])
+                                externalFail = true;   
+                        })
+                        .catch((error) => {
+                            console.error(error);
+                            externalFail = true;
+                        });
+                        if (error || externalFail) {
                             console.log(error);
                             Manager.findByIdAndDelete(manager._id);
                             Clinic.findByIdAndDelete(clinic._id);

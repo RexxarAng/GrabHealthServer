@@ -11,6 +11,15 @@ const Admin = require("../models/admin");
 const nodemailer = require('nodemailer');
 const Validator = require('../validation/validation');
 const smtpTransport = require('nodemailer-smtp-transport');
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+
+=======
+const bcrypt = require('bcryptjs');
+>>>>>>> master
+
+>>>>>>> Stashed changes
 var transporter = nodemailer.createTransport(smtpTransport({
     service: 'gmail',
     auth: {
@@ -29,7 +38,7 @@ var transporter = nodemailer.createTransport(smtpTransport({
     text: 'Enter text'
   };
 
-router.post('/authenticate', (req, res, next) => {
+router.post('/authenticate', (req, res) => {
     console.log(req.body);
     var role = req.body.role;
     const email = req.body.email;
@@ -38,13 +47,27 @@ router.post('/authenticate', (req, res, next) => {
         return res.status(404).json({success: false, msg: "Invalid username or password"})
     }
     var currentRole;
-    if(role == "Manager"){
+    if(role === "Manager"){
         currentRole = Manager;
-    } else if(role == "Receptionist") {
+    } else if(role === "Receptionist") {
         currentRole = Receptionist;
+<<<<<<< HEAD
     } else if (role == "Doctor") {
+<<<<<<< Updated upstream
         curentRole = Doctor;
     } else {
+=======
+        currentRole = Doctor;
+    } else if (role == "Admin") {
+        currentRole = Admin;
+    } 
+    else {
+=======
+    } else if (role === "Doctor") {
+        curentRole = Doctor;
+    } else {
+>>>>>>> master
+>>>>>>> Stashed changes
         return res.status(404).json({success: false, msg: "Invalid role."})
     }
     currentRole.getUserByEmail(email ,(err, user) => {
@@ -61,10 +84,9 @@ router.post('/authenticate', (req, res, next) => {
                 user.address = undefined;
                 user.password = undefined;
                 user.nric = undefined;
-                user.clinic = undefined;
                 user.contactNo = undefined;
                 console.log(user);
-                if(role == "Manager" || role == "Doctor") {
+                if(role === "Manager" || role === "Doctor") {
                     user.doctorLicenseNo = undefined;
                 }
                 const token = jwt.sign(JSON.parse(JSON.stringify(user)), config.secret, {
@@ -77,7 +99,8 @@ router.post('/authenticate', (req, res, next) => {
                     user: {
                         id: user._id,
                         email: user.email,
-                        role: role
+                        role: role,
+                        clinic: user.clinic
                     }
                 });
             } else {
@@ -87,9 +110,66 @@ router.post('/authenticate', (req, res, next) => {
     });
 });
 
+router.post('/forgetpassword', (req, res) => {
+    var role = req.body.role;
+    var email = req.body.email;
+    var nric = req.body.nric
+    var currentRole;
+    if(role === "Manager"){
+        currentRole = Manager;
+    } else if(role === "Receptionist") {
+        currentRole = Receptionist;
+    } else if (role === "Doctor") {
+        curentRole = Doctor;
+    } else {
+        return res.status(404).json({success: false, msg: "Invalid role."})
+    }
+    currentRole.getUserByEmail(email, (err, user) => {
+        if (err) {
+            return res.status(404).json({success: false, msg: "Email doesn't exist"})
+        }
+        //Check if nric matches
+        if (user.nric === nric) {
+            var randomPassword = password.randomPassword({ characters: password.lower + password.upper + password.digits });
+            mailOptions.subject = "You have successfully reset your password!";
+            mailOptions.text = "Dear " + user.firstName + " " + user.lastName + ", \n\n" + 
+                "Your password has successfully been reset to " +  randomPassword + ". \n\n" +
+                "Best regards, \n" +
+                "GrabHealth Team"; 
+            mailOptions.to = user.email;
+            transporter.sendMail(mailOptions, function(error, info){  
+                if(error) {
+                    console.log(error);
+                    return res.json({success: false, msg: "Failed to send email"});
+                } else {
+                    //hash random password
+                    bcrypt.genSalt(10, (err, salt) => {
+                        bcrypt.hash(randomPassword, salt, (err, hash) =>{
+                            if(err) throw err;
+                            //set hashed random password as password in database
+                            user.password = hash;
+                            user.save();
+                            console.log('Email sent: ' + info.response);
+                            return res.json({success: true, msg: "Password successfully been reset"});
+                        });
+                    });
 
+<<<<<<< Updated upstream
 
+=======
+                }
+            });
+        }
+    });
+});
+
+<<<<<<< HEAD
+>>>>>>> Stashed changes
 router.post('/createAdmin', (req, res, next) => {
+=======
+
+router.post('/createAdmin', (req, res) => {
+>>>>>>> master
     let newAdmin = new Admin({
         firstName: req.body.firstName,
         lastName: req.body.lastName,
@@ -107,4 +187,14 @@ router.post('/createAdmin', (req, res, next) => {
     });
 });
 
+<<<<<<< Updated upstream
 module.exports = router;
+=======
+<<<<<<< HEAD
+module.exports = router;
+
+=======
+
+module.exports = router;
+>>>>>>> master
+>>>>>>> Stashed changes

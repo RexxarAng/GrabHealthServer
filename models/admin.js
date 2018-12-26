@@ -25,6 +25,30 @@ const AdminSchema = mongoose.Schema({
         type: Number,
         required: true
     },
+    tempKey: {
+        secret: {
+            type: String,
+            default: ''
+        },
+        iv: {
+            type: String,
+            default: ''
+        },
+        tag: {
+            type: Buffer,
+            default: ''
+        }
+    },
+    key: {
+        secret: {
+            type: String,
+            default: ''
+        }
+    },
+    twoFA: {
+        type: Boolean,
+        default: false
+    },
     role: {
         type: String,
         required: true,

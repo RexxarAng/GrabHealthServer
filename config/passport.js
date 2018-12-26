@@ -5,7 +5,6 @@ const Doctor = require('../models/doctor');
 const Receptionist = require('../models/receptionist');
 const Admin = require('../models/admin');
 const config = require('../config/database');
-
 module.exports = function(passport){
     let opts = {};
     opts.jwtFromRequest = ExtractJwt.fromAuthHeaderWithScheme("jwt");
@@ -35,7 +34,7 @@ module.exports = function(passport){
                 return done(null, false);
             }
         });
-        
-       
     }));
+  
 }
+
