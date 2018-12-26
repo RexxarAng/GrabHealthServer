@@ -11,6 +11,8 @@ const Admin = require("../models/admin");
 const nodemailer = require('nodemailer');
 const Validator = require('../validation/validation');
 const smtpTransport = require('nodemailer-smtp-transport');
+
+
 var transporter = nodemailer.createTransport(smtpTransport({
     service: 'gmail',
     auth: {
@@ -43,8 +45,11 @@ router.post('/authenticate', (req, res, next) => {
     } else if(role == "Receptionist") {
         currentRole = Receptionist;
     } else if (role == "Doctor") {
-        curentRole = Doctor;
-    } else {
+        currentRole = Doctor;
+    } else if (role == "Admin") {
+        currentRole = Admin;
+    } 
+    else {
         return res.status(404).json({success: false, msg: "Invalid role."})
     }
     currentRole.getUserByEmail(email ,(err, user) => {
@@ -88,7 +93,6 @@ router.post('/authenticate', (req, res, next) => {
 });
 
 
-
 router.post('/createAdmin', (req, res, next) => {
     let newAdmin = new Admin({
         firstName: req.body.firstName,
@@ -108,3 +112,4 @@ router.post('/createAdmin', (req, res, next) => {
 });
 
 module.exports = router;
+
