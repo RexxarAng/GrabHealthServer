@@ -44,8 +44,7 @@ router.post('/authenticate', (req, res) => {
         currentRole = Manager;
     } else if(role === "Receptionist") {
         currentRole = Receptionist;
-
-    } else if (role == "Doctor") {
+    } else if (role === "Doctor") {
         curentRole = Doctor;
     }
 
@@ -138,12 +137,12 @@ router.post('/forgetpassword', (req, res) => {
                             return res.json({success: true, msg: "Password successfully been reset"});
                         });
                     });
+
                 }
             });
         }
     });
 });
-
 
 router.post('/createAdmin', (req, res) => {
     let newAdmin = new Admin({
@@ -162,5 +161,6 @@ router.post('/createAdmin', (req, res) => {
         }
     });
 });
+
 
 module.exports = router;

@@ -6,6 +6,13 @@ const Doctor = require("../models/doctor");
 const Receptionist = require("../models/receptionist");
 const passport = require('passport');
 
+isDoctor = function(req, res, next){
+    if(req.user.role == 'Doctor') {
+        next();
+    } else {
+        res.json({success: false, unauthenticated: true, msg: "Permission denied!"})
+    }
+}
 module.exports = router;
 
 
