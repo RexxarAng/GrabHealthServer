@@ -36,6 +36,10 @@ const ClinicSchema = mongoose.Schema({
         type: Schema.Types.ObjectId,
         ref: 'Manager',
         required: true
+    },
+    consultationFee: {
+        type: Number,
+        default: 20
     }
 
 });
