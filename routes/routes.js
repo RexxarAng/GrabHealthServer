@@ -11,15 +11,8 @@ const Admin = require("../models/admin");
 const nodemailer = require('nodemailer');
 const Validator = require('../validation/validation');
 const smtpTransport = require('nodemailer-smtp-transport');
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
-
-=======
 const bcrypt = require('bcryptjs');
->>>>>>> master
 
->>>>>>> Stashed changes
 var transporter = nodemailer.createTransport(smtpTransport({
     service: 'gmail',
     auth: {
@@ -51,23 +44,15 @@ router.post('/authenticate', (req, res) => {
         currentRole = Manager;
     } else if(role === "Receptionist") {
         currentRole = Receptionist;
-<<<<<<< HEAD
+
     } else if (role == "Doctor") {
-<<<<<<< Updated upstream
         curentRole = Doctor;
-    } else {
-=======
-        currentRole = Doctor;
+    }
+
     } else if (role == "Admin") {
         currentRole = Admin;
     } 
-    else {
-=======
-    } else if (role === "Doctor") {
-        curentRole = Doctor;
-    } else {
->>>>>>> master
->>>>>>> Stashed changes
+ else {
         return res.status(404).json({success: false, msg: "Invalid role."})
     }
     currentRole.getUserByEmail(email ,(err, user) => {
@@ -153,23 +138,14 @@ router.post('/forgetpassword', (req, res) => {
                             return res.json({success: true, msg: "Password successfully been reset"});
                         });
                     });
-
-<<<<<<< Updated upstream
-
-=======
                 }
             });
         }
     });
 });
 
-<<<<<<< HEAD
->>>>>>> Stashed changes
-router.post('/createAdmin', (req, res, next) => {
-=======
 
 router.post('/createAdmin', (req, res) => {
->>>>>>> master
     let newAdmin = new Admin({
         firstName: req.body.firstName,
         lastName: req.body.lastName,
@@ -187,14 +163,4 @@ router.post('/createAdmin', (req, res) => {
     });
 });
 
-<<<<<<< Updated upstream
 module.exports = router;
-=======
-<<<<<<< HEAD
-module.exports = router;
-
-=======
-
-module.exports = router;
->>>>>>> master
->>>>>>> Stashed changes
