@@ -16,6 +16,7 @@ var speakeasy = require("speakeasy");
 var QRCode = require('qrcode');
 var crypto = require('crypto');
 const passwordModule = require('secure-random-password');
+const BlackList = require('../models/blacklist');
 
 algorithm = 'aes-256-gcm';
 secretKey = 'D87314A83ABFB2312CF8F5386F62A6VS';
@@ -63,8 +64,29 @@ isAdmin = function(req, res, next){
     if(req.user.role == 'Admin') {
         next();
     } else {
+        let token = new BlackList({
+            token : req.headers.authorization
+        });
+        BlackList.addToken(token, (err, token) => {
+            if(err){
+                return res.json({success: false, msg: err});
+            } else {
+                return res.json({success: true, msg: "Blacklisted token"});
+            }
+        });
         res.json({success: false, unauthenticated: true, msg: "Permission denied!"})
     }
+}
+
+isNotBlackListedToken = function(req, res, next){
+    BlackList.findOne({'token': req.headers.authorization}, (err, token) => {
+        if(token){
+            res.json({success: false, unauthenticated: true, msg: "Blacklisted token!"})
+        } else {
+            console.log(req.headers.authorization);
+            next();
+        }
+    });
 }
 
 router.post('/authenticate2FA', (req, res) => {
@@ -115,6 +137,8 @@ router.post('/authenticate2FA', (req, res) => {
                         let signedUser = new Admin(user);
                         signedUser.password = undefined;
                         signedUser.contactNo = undefined;
+                        signedUser.tempKey = undefined;
+                        signedUser.key = undefined;
                         const token = jwt.sign(JSON.parse(JSON.stringify(signedUser)), config.secret, {
                             expiresIn: 3600 
                         });
@@ -279,7 +303,7 @@ router.post('/createFirstAdmin', (req, res, next) => {
     });
 });
 
-router.post('/createAdmin', [passport.authenticate('jwt', {session:false}), isAdmin], (req, res, next) => {
+router.post('/createAdmin', [passport.authenticate('jwt', {session:false}), isAdmin, isNotBlackListedToken], (req, res, next) => {
     let newAdmin = new Admin({
         firstName: req.body.firstName,
         lastName: req.body.lastName,
@@ -296,7 +320,7 @@ router.post('/createAdmin', [passport.authenticate('jwt', {session:false}), isAd
     });
 });
 
-router.post('/clinic/register', [passport.authenticate('jwt', {session:false}), isAdmin], (req, res, next) => { 
+router.post('/clinic/register', [passport.authenticate('jwt', {session:false}), isAdmin, isNotBlackListedToken], (req, res, next) => { 
     if(!Validator.validateNric(req.body.manager.nric)){
         return res.json({success:false, msg: "invalid ic number!"});
     };
@@ -381,7 +405,7 @@ router.post('/clinic/register', [passport.authenticate('jwt', {session:false}), 
     })
 });
 
-router.get("/clinicList", [passport.authenticate('jwt', {session:false}), isAdmin], (req, res, next) => {
+router.get("/clinicList", [passport.authenticate('jwt', {session:false}), isAdmin, isNotBlackListedToken], (req, res, next) => {
     Clinic.find({})
         .populate({ path: 'clinicManager', select: 'firstName lastName email _id address contactNo' })
         .exec(function (err, clinics){
