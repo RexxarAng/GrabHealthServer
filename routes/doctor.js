@@ -5,6 +5,7 @@ const Clinic = require("../models/clinic");
 const Doctor = require("../models/doctor");
 const Receptionist = require("../models/receptionist");
 const passport = require('passport');
+const multer = require('multer');
 
 isDoctor = function(req, res, next){
     if(req.user.role == 'Doctor') {

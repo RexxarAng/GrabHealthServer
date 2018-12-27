@@ -47,20 +47,20 @@ router.post('/authenticate', (req, res) => {
         currentRole = Receptionist;
     } else if (role === "Doctor") {
         curentRole = Doctor;
-    }
- else {
+    } else {
         return res.status(404).json({success: false, msg: "Invalid role."})
     }
     currentRole.getUserByEmail(email ,(err, user) => {
         if(err) {
             console.log(err);
-            return res.status(400).json({success: false, msg: "Something hapepned"});
+            return res.status(400).json({success: false, msg: "Something happened"});
         }
         if(!user){
             return res.status(404).json({success: false, msg: "Invalid email or password entered."});
         }
         currentRole.comparePassword(password, user.password, (err, isMatch) => {
-            if(err) throw err;
+            if(err) 
+                return res.status(400).json({success: false, msg: err});
             if(isMatch){
                 user.address = undefined;
                 user.password = undefined;

@@ -61,7 +61,7 @@ var mailOptions = {
 };
 
 isAdmin = function(req, res, next){
-    if(req.user.role == 'Admin') {
+    if(req.user.role === 'Admin') {
         next();
     } else {
         let token = new BlackList({
@@ -69,9 +69,9 @@ isAdmin = function(req, res, next){
         });
         BlackList.addToken(token, (err, token) => {
             if(err){
-                return res.json({success: false, msg: err});
+                return res.json({success: false, unauthenticated: true, msg: err});
             } else {
-                return res.json({success: true, msg: "Blacklisted token"});
+                return res.json({success: false, unauthenticated: true, msg: "Blacklisted token"});
             }
         });
         res.json({success: false, unauthenticated: true, msg: "Permission denied!"})
@@ -83,7 +83,6 @@ isNotBlackListedToken = function(req, res, next){
         if(token){
             res.json({success: false, unauthenticated: true, msg: "Blacklisted token!"})
         } else {
-            console.log(req.headers.authorization);
             next();
         }
     });
@@ -327,6 +326,9 @@ router.post('/clinic/register', [passport.authenticate('jwt', {session:false}), 
     if(!Validator.validateEmail(req.body.manager.email)) {
         return res.json({success:false, msg: "invalid email format" })
     };
+    if(!Validator.validateContactNo(req.body.manager.contactNo)){
+        return res.json({success: false, msg: "Invalid contact number"})
+    }
     req.body.manager.email = req.body.manager.email.toLocaleLowerCase();
     var randomPassword = password.randomPassword({ characters: password.lower + password.upper + password.digits });
     let newManager = new Manager({
