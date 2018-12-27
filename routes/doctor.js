@@ -5,6 +5,10 @@ const Clinic = require("../models/clinic");
 const Doctor = require("../models/doctor");
 const Receptionist = require("../models/receptionist");
 const passport = require('passport');
+const multer = require('multer'); 
+var DIR = './uploads';
+var upload = multer({ dest: DIR }).single('photo');
+// const fpath = require ('path');
 
 isDoctor = function(req, res, next){
     if(req.user.role == 'Doctor') {
@@ -53,7 +57,6 @@ var photoUpload = multer({storage: storage}).single('photo')
     })
 
 
-    module.exports = router;
 isDoctor = function(req, res, next){
     if(req.user.role == 'Doctor') {
         next();
