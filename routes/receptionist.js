@@ -26,7 +26,9 @@ router.post('/createPatient', [passport.authenticate('jwt', {session:false}), is
         nric: req.body.nric,
         password: req.body.password,
         contactNo: req.body.contactNo,
-        address: req.body.address
+        address: req.body.address,
+        dob: req.body.dob,
+        nationality: req.body.nationality
     });
 
     Patient.addUser(newPatient, (err, patient) => {

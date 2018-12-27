@@ -33,6 +33,14 @@ const PatientSchema = mongoose.Schema({
         type: String,
         required: true
     },
+    dob: {
+        type: String,
+        required: true
+    },
+    nationality: {
+        type: String,
+        required: true
+    },
     clinic: [{
         type: Schema.Types.ObjectId,
         ref: 'Clinic'

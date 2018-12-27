@@ -46,9 +46,7 @@ router.post('/authenticate', (req, res) => {
         currentRole = Receptionist;
     } else if (role === "Doctor") {
         curentRole = Doctor;
-    }
-
-    } else if (role == "Admin") {
+    } else if (role === "Admin") {
         currentRole = Admin;
     } 
  else {
