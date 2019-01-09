@@ -375,6 +375,7 @@ router.post('/clinic/register', [passport.authenticate('jwt', {session:false}), 
                     transporter.sendMail(mailOptions, function(error, info){
                         externalFail = false;
                         axios.post('http://localhost:4000/GrabHealthWeb/createClinic', {
+                            _id: clinic._id,
                             name: req.body.clinic.name,
                             address: req.body.clinic.address,
                             location: req.body.clinic.location,
@@ -383,8 +384,11 @@ router.post('/clinic/register', [passport.authenticate('jwt', {session:false}), 
                             clinicLicenseNo: req.body.clinic.clinicLicenseNo
                         })
                         .then((res) => {
-                            if(!res['success'])
+                            data = res['data'];
+                            if(!data['success']) {
                                 externalFail = true;   
+                                console.log('Successful');
+                            }
                         })
                         .catch((error) => {
                             console.error(error);
@@ -413,6 +417,41 @@ router.get("/clinicList", [passport.authenticate('jwt', {session:false}), isAdmi
         .exec(function (err, clinics){
             res.send({'clinics': clinics}).status(201);
         }) 
+});
+
+router.post("/clinic/remove", [passport.authenticate('jwt', {session:false}), isAdmin, isNotBlackListedToken], (req, res, next) => {
+    Clinic.findOne({clinicLicenseNo: req.body.clinicLicenseNo}, (err, clinic) => {
+        if(err){
+            return res.json({success: false, msg: 'Clinic doesnt exist'});
+        }
+        if(clinic){
+            clinic.remove(function(err, removed) {
+                if(err){
+                    return res.json({success: false, msg: 'Something happened'});
+                }
+                if(removed){
+                    axios.post('http://localhost:4000/GrabHealthWeb/removeClinic', {
+                        clinicLicenseNo: req.body.clinicLicenseNo
+                        })
+                        .then((res) => {
+                            data = res['data'];
+                            if(data['success']){
+                                console.log("successful!");
+                            } else {
+                                console.log("failed");
+                            }  
+                        })
+                        .catch((error) => {
+                            console.error(error);
+                        });
+                    return res.json({success: true, msg: 'Clinic successfully deleted'});
+                } else {
+                    return res.json({success: false, msg: 'Clinic cannot be deleted'});
+                }
+
+            });
+        }
+    });
 });
 
 module.exports = router;
