@@ -50,7 +50,7 @@ router.post('/authenticate', (req, res) => {
     } else {
         return res.status(404).json({success: false, msg: "Invalid role."})
     }
-    currentRole.getUserByEmail(email ,(err, user) => {
+    currentRole.getUserByEmail(email, (err, user) => {
         if(err) {
             console.log(err);
             return res.status(400).json({success: false, msg: "Something happened"});
