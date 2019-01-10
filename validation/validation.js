@@ -1,4 +1,4 @@
-const Validator = module.exports
+const Validator = module.exports;
 
 module.exports.validateEmail = function(email) {
     var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
@@ -64,4 +64,60 @@ module.exports.validateNric = function(ic){
         }
     }
 
+}
+
+
+//Validation for patient fields
+/* Validation for first name */
+module.exports.validateFirstName = function(firstName) {
+    if (firstName.length === '' || firstName.length === 0) {
+        return false;
+    } else {
+        return true;
+    }
+}
+
+/* Validation for last name */
+module.exports.validateLastName = function(lastName) {
+    if (lastName.length === '' || lastName.length === 0) {
+        return false;
+    } else {
+        return true;
+    }
+} 
+
+/* Validation for gender */
+module.exports.validateGender = function(gender) {
+    if (gender.length === '' || gender.length === 0) {
+        return false;
+    } else {
+        return true;
+    }
+}
+
+/* Validation for address */
+module.exports.validateAddress = function(address) {
+    if (address.length === '' || address.length === 0 || address.length >256) {
+        return false;
+    } else {
+        return true;
+    }
+}
+
+/* Validation for dob */
+module.exports.validateDOB = function(dob) {
+    var re = /^(19|20)\d\d[-](0[1-9]|1[012])[-](0[1-9]|[12][0-9]|3[01])$/;
+    return re.test(dob);
+}
+
+/* Validation for nationality */
+module.exports.validateNationality = function(nationality) {
+    var re = /[A-Z||a-z]{4,30}/;
+    return re.test(nationality);
+}
+
+/* Validation for contact no. */
+module.exports.validateContactNo = function(contactNo) {
+    var re = /^[689]\d{7}$/;
+    return re.test(contactNo);
 }

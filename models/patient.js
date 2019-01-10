@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const config = require("../config/database");
 const uniqueValidator = require('mongoose-unique-validator');
+const Validator = require('../validation/validation');
 
 const Schema = mongoose.Schema;
 
@@ -38,6 +39,10 @@ const PatientSchema = mongoose.Schema({
         required: true
     },
     nationality: {
+        type: String,
+        required: true
+    },
+    gender:{
         type: String,
         required: true
     },

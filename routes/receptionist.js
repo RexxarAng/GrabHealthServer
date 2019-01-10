@@ -16,10 +16,42 @@ isReceptionist = function(req, res, next){
     }
 }
 
+//create patient
 router.post('/createPatient', [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
+    console.log(req.body);
     if(!Validator.validateNric(req.body.nric)){
-        return res.json({success:false, msg: "invalid ic number!"});
+        return res.json({success:false, msg: "Invalid IC number!"});
     };
+    
+    if(!Validator.validateFirstName(req.body.firstName)){
+        return res.json({success: false, msg: "Invalid first name!"});
+    };
+
+    if(!Validator.validateLastName(req.body.lastName)){
+        return res.json({success: false, msg: "Invalid last name!"});
+    };
+
+    if(!Validator.validateGender(req.body.gender)){
+        return res.json({success: false, msg: "Gender not selected!"});
+    };
+
+    if(!Validator.validateAddress(req.body.address)){
+        return res.json({success: false, msg: "Invalid address!"});
+    };
+
+    if(!Validator.validateDOB(req.body.dob)){
+        return res.json({success: false, msg: "Invalid DOB!"});
+    };
+
+    if(!Validator.validateNationality(req.body.nationality)) {
+        return res.json({success: false, msg: "Invalid nationality!"});
+    };
+
+    if(!Validator.validateContactNo(req.body.contactNo)) {
+        return res.json({success: false, msg: "Invalid contact no.!"});
+    };
+
+
     let newPatient = new Patient({
         firstName: req.body.firstName,
         lastName: req.body.lastName,
@@ -28,7 +60,8 @@ router.post('/createPatient', [passport.authenticate('jwt', {session:false}), is
         contactNo: req.body.contactNo,
         address: req.body.address,
         dob: req.body.dob,
-        nationality: req.body.nationality
+        nationality: req.body.nationality,
+        gender: req.body.gender
     });
 
     Patient.addUser(newPatient, (err, patient) => {
@@ -44,9 +77,10 @@ router.post('/createPatient', [passport.authenticate('jwt', {session:false}), is
     });
 });
 
+//create payment
 router.post('/createPayment', [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
     if(!Validator.validateNric(req.body.patient)){
-        return res.json({success:false, msg: "invalid ic number!"});
+        return res.json({success:false, msg: "Invalid IC number!"});
     };
     Patient.findOne({nric: req.body.patient}, (err, patient) => {
         if(err){
@@ -70,7 +104,9 @@ router.get("/patient-list", [passport.authenticate('jwt', {session:false}), isRe
         if(err)
             res.send({success: false, msg: err}).status(404);
         if(patients)
-            res.send({'patients': patients}).status(201);
+            res.send({success: true, 'patients': patients}).status(201);
+        else
+            res.send({success: false, msg: 'Something happened'}).status(404);
     });
 });
 
