@@ -17,7 +17,7 @@ var QRCode = require('qrcode');
 var crypto = require('crypto');
 const passwordModule = require('secure-random-password');
 const BlackList = require('../models/blacklist');
-
+const MedicineList = require('../models/medicinelist');
 algorithm = 'aes-256-gcm';
 secretKey = 'D87314A83ABFB2312CF8F5386F62A6VS';
 // do not use a global iv for production, 
@@ -168,82 +168,6 @@ router.post('/authenticate2FA', (req, res) => {
     });
 });
 
-router.post('/totp-set-up', (req, res) => {
-    Admin.getUserByEmail(req.body.email ,(err, admin) => {
-        if(err) {
-            console.log(err);
-            return res.status(400).json({success: false, msg: "Something happened"});
-        }
-        if(!user){
-            return res.status(404).json({success: false, msg: "Invalid email or password entered."});
-        }
-        Admin.comparePassword(password, user.password, (err, isMatch) => {
-            if(err) throw err;
-            if(isMatch){
-                var secret = speakeasy.generateSecret();
-                admin.tempKey = secret.base32;
-                admin.save();
-                QRCode.toDataURL(secret.otpauth_url, function(err, data_url) {
-                    res.json({success: true, msg: "QRCODE URL sent", data: data_url})
-                });
-
-                
-            } else {
-                return res.status(404).json({success: false, msg: "Invalid email or password entered."});
-            }
-    
-        });
-
-    });
-});
-
-router.post('/verify-totp', (req, res) => {
-    var userToken = req.body.token;
-    Admin.getUserByEmail(req.body.email ,(err, admin) => {
-        if(err) {
-            console.log(err);
-            return res.status(400).json({success: false, msg: "Something happened"});
-        }
-        if(!user){
-            return res.status(404).json({success: false, msg: "Invalid email or password entered."});
-        }
-        Admin.comparePassword(password, user.password, (err, isMatch) => {
-            if(err) throw err;
-            if(isMatch){
-                var base32secret = user.tempKey;
-                var verified = speakeasy.totp.verify({ 
-                    secret: base32secret,
-                    encoding: 'base32',
-                    token: userToken 
-                });
-                if (verified) {
-                    if(user.key === '') {
-                        user.key = user.tempKey;
-                        user.save();
-                    }
-                    user.password = undefined;
-                    user.contactNo = undefined;
-                    const token = jwt.sign(JSON.parse(JSON.stringify(user)), config.secret, {
-                        expiresIn: 3600 
-                    });
-                    res.json({
-                        success: true,
-                        token: 'JWT ' + token,  
-                        user: {
-                            id: user._id,
-                            email: user.email,
-                            role: role                    }
-                    });
-                } 
-            } else {
-                return res.status(404).json({success: false, msg: "Invalid email or password entered."});
-            }
-    
-        });
-
-    });
-});
-
 router.post('/authenticate', (req, res) => {
     var role = req.body.role;
     const email = req.body.email;
@@ -364,6 +288,10 @@ router.post('/clinic/register', [passport.authenticate('jwt', {session:false}), 
                         updateManager.clinic = clinic._id;
                         updateManager.save();
                     });
+                    let newMedicineList = new MedicineList({
+                        clinic: clinic._id
+                    })
+                    MedicineList.addMedicineList(newMedicineList);
                     mailOptions.subject = "Thank you for registering your clinic with us!";
                     mailOptions.text = "Dear " + manager.firstName + " " + manager.lastName + ", \n\n" + 
                         "Thank you for your application. We are pleased to inform you that you have successfully registered your clinic with us.\n\n" +
