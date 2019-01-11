@@ -13,6 +13,11 @@ module.exports.validatePasswords = function(user){
     }
 }
 
+module.exports.validateContactNo = function(contactNo){
+    var re = /^[689]\d{7}$/ 
+    return re.test(contactNo);
+}
+
 module.exports.validateNric = function(ic){
     var icArray = new Array(9);
     for (let i = 0; i < 9; i++) {
@@ -63,6 +68,7 @@ module.exports.validateNric = function(ic){
         return true;
         }
     }
+    
 
 }
 

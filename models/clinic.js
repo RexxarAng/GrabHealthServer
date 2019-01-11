@@ -2,7 +2,9 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const config = require("../config/database");
 const uniqueValidator = require('mongoose-unique-validator');
-
+const Manager = require('./manager');
+const Receptionist = require('./receptionist');
+const Doctor = require('./doctor');
 const Schema = mongoose.Schema;
 
 const ClinicSchema = mongoose.Schema({
@@ -44,6 +46,15 @@ const ClinicSchema = mongoose.Schema({
 
 });
 
+
+ClinicSchema.pre('remove', function(next) {
+    // 'this' is the client being removed. Provide callbacks here if you want
+    // to be notified of the calls' result.
+    Manager.deleteOne({clinic: this._id}).exec();
+    Doctor.deleteMany({clinic: this._id}).exec();
+    Receptionist.deleteMany({clinic: this._id}).exec();
+    next();
+});
 const Clinic = module.exports = mongoose.model('Clinic', ClinicSchema);
 
 module.exports.getClinicById = function(id, callback) {

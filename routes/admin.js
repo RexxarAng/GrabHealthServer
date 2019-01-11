@@ -16,6 +16,7 @@ var speakeasy = require("speakeasy");
 var QRCode = require('qrcode');
 var crypto = require('crypto');
 const passwordModule = require('secure-random-password');
+const BlackList = require('../models/blacklist');
 
 algorithm = 'aes-256-gcm';
 secretKey = 'D87314A83ABFB2312CF8F5386F62A6VS';
@@ -60,11 +61,31 @@ var mailOptions = {
 };
 
 isAdmin = function(req, res, next){
-    if(req.user.role == 'Admin') {
+    if(req.user.role === 'Admin') {
         next();
     } else {
+        let token = new BlackList({
+            token : req.headers.authorization
+        });
+        BlackList.addToken(token, (err, token) => {
+            if(err){
+                return res.json({success: false, unauthenticated: true, msg: err});
+            } else {
+                return res.json({success: false, unauthenticated: true, msg: "Blacklisted token"});
+            }
+        });
         res.json({success: false, unauthenticated: true, msg: "Permission denied!"})
     }
+}
+
+isNotBlackListedToken = function(req, res, next){
+    BlackList.findOne({'token': req.headers.authorization}, (err, token) => {
+        if(token){
+            res.json({success: false, unauthenticated: true, msg: "Blacklisted token!"})
+        } else {
+            next();
+        }
+    });
 }
 
 router.post('/authenticate2FA', (req, res) => {
@@ -115,6 +136,8 @@ router.post('/authenticate2FA', (req, res) => {
                         let signedUser = new Admin(user);
                         signedUser.password = undefined;
                         signedUser.contactNo = undefined;
+                        signedUser.tempKey = undefined;
+                        signedUser.key = undefined;
                         const token = jwt.sign(JSON.parse(JSON.stringify(signedUser)), config.secret, {
                             expiresIn: 3600 
                         });
@@ -279,7 +302,7 @@ router.post('/createFirstAdmin', (req, res, next) => {
     });
 });
 
-router.post('/createAdmin', [passport.authenticate('jwt', {session:false}), isAdmin], (req, res, next) => {
+router.post('/createAdmin', [passport.authenticate('jwt', {session:false}), isAdmin, isNotBlackListedToken], (req, res, next) => {
     let newAdmin = new Admin({
         firstName: req.body.firstName,
         lastName: req.body.lastName,
@@ -296,13 +319,16 @@ router.post('/createAdmin', [passport.authenticate('jwt', {session:false}), isAd
     });
 });
 
-router.post('/clinic/register', [passport.authenticate('jwt', {session:false}), isAdmin], (req, res, next) => { 
+router.post('/clinic/register', [passport.authenticate('jwt', {session:false}), isAdmin, isNotBlackListedToken], (req, res, next) => { 
     if(!Validator.validateNric(req.body.manager.nric)){
         return res.json({success:false, msg: "invalid ic number!"});
     };
     if(!Validator.validateEmail(req.body.manager.email)) {
         return res.json({success:false, msg: "invalid email format" })
     };
+    if(!Validator.validateContactNo(req.body.manager.contactNo)){
+        return res.json({success: false, msg: "Invalid contact number"})
+    }
     req.body.manager.email = req.body.manager.email.toLocaleLowerCase();
     var randomPassword = password.randomPassword({ characters: password.lower + password.upper + password.digits });
     let newManager = new Manager({
@@ -349,6 +375,7 @@ router.post('/clinic/register', [passport.authenticate('jwt', {session:false}), 
                     transporter.sendMail(mailOptions, function(error, info){
                         externalFail = false;
                         axios.post('http://localhost:4000/GrabHealthWeb/createClinic', {
+                            _id: clinic._id,
                             name: req.body.clinic.name,
                             address: req.body.clinic.address,
                             location: req.body.clinic.location,
@@ -357,8 +384,11 @@ router.post('/clinic/register', [passport.authenticate('jwt', {session:false}), 
                             clinicLicenseNo: req.body.clinic.clinicLicenseNo
                         })
                         .then((res) => {
-                            if(!res['success'])
+                            data = res['data'];
+                            if(!data['success']) {
                                 externalFail = true;   
+                                console.log('Successful');
+                            }
                         })
                         .catch((error) => {
                             console.error(error);
@@ -381,12 +411,47 @@ router.post('/clinic/register', [passport.authenticate('jwt', {session:false}), 
     })
 });
 
-router.get("/clinicList", [passport.authenticate('jwt', {session:false}), isAdmin], (req, res, next) => {
+router.get("/clinicList", [passport.authenticate('jwt', {session:false}), isAdmin, isNotBlackListedToken], (req, res, next) => {
     Clinic.find({})
         .populate({ path: 'clinicManager', select: 'firstName lastName email _id address contactNo' })
         .exec(function (err, clinics){
             res.send({'clinics': clinics}).status(201);
         }) 
+});
+
+router.post("/clinic/remove", [passport.authenticate('jwt', {session:false}), isAdmin, isNotBlackListedToken], (req, res, next) => {
+    Clinic.findOne({clinicLicenseNo: req.body.clinicLicenseNo}, (err, clinic) => {
+        if(err){
+            return res.json({success: false, msg: 'Clinic doesnt exist'});
+        }
+        if(clinic){
+            clinic.remove(function(err, removed) {
+                if(err){
+                    return res.json({success: false, msg: 'Something happened'});
+                }
+                if(removed){
+                    axios.post('http://localhost:4000/GrabHealthWeb/removeClinic', {
+                        clinicLicenseNo: req.body.clinicLicenseNo
+                        })
+                        .then((res) => {
+                            data = res['data'];
+                            if(data['success']){
+                                console.log("successful!");
+                            } else {
+                                console.log("failed");
+                            }  
+                        })
+                        .catch((error) => {
+                            console.error(error);
+                        });
+                    return res.json({success: true, msg: 'Clinic successfully deleted'});
+                } else {
+                    return res.json({success: false, msg: 'Clinic cannot be deleted'});
+                }
+
+            });
+        }
+    });
 });
 
 module.exports = router;

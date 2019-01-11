@@ -12,6 +12,7 @@ const nodemailer = require('nodemailer');
 const Validator = require('../validation/validation');
 const smtpTransport = require('nodemailer-smtp-transport');
 const bcrypt = require('bcryptjs');
+const BlackList = require('../models/blacklist');
 
 var transporter = nodemailer.createTransport(smtpTransport({
     service: 'gmail',
@@ -46,22 +47,20 @@ router.post('/authenticate', (req, res) => {
         currentRole = Receptionist;
     } else if (role === "Doctor") {
         curentRole = Doctor;
-    } else if (role === "Admin") {
-        currentRole = Admin;
-    } 
- else {
+    } else {
         return res.status(404).json({success: false, msg: "Invalid role."})
     }
-    currentRole.getUserByEmail(email ,(err, user) => {
+    currentRole.getUserByEmail(email, (err, user) => {
         if(err) {
             console.log(err);
-            return res.status(400).json({success: false, msg: "Something hapepned"});
+            return res.status(400).json({success: false, msg: "Something happened"});
         }
         if(!user){
             return res.status(404).json({success: false, msg: "Invalid email or password entered."});
         }
         currentRole.comparePassword(password, user.password, (err, isMatch) => {
-            if(err) throw err;
+            if(err) 
+                return res.status(400).json({success: false, msg: err});
             if(isMatch){
                 user.address = undefined;
                 user.password = undefined;
@@ -72,7 +71,7 @@ router.post('/authenticate', (req, res) => {
                     user.doctorLicenseNo = undefined;
                 }
                 const token = jwt.sign(JSON.parse(JSON.stringify(user)), config.secret, {
-                    expiresIn: 3600 
+                    expiresIn: 86400 
                 });
 
                 res.json({
@@ -160,5 +159,17 @@ router.post('/createAdmin', (req, res) => {
     });
 });
 
+router.post('/blacklistToken', passport.authenticate('jwt', {session:false}), (req, res) => {
+    let token = new BlackList({
+        token : req.headers.authorization
+    });
+    BlackList.addToken(token, (err2, token) => {
+        if(err2)
+            return res.json({success: false, msg: "Token already blacklisted"});
+        if(token)
+            return res.json({success: true, msg:"Token blacklisted"});
+    });
+
+});
 
 module.exports = router;

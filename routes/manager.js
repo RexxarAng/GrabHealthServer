@@ -43,6 +43,9 @@ router.post('/register/receptionist', [passport.authenticate('jwt', {session:fal
     if(!Validator.validateEmail(req.body.email)) {
         return res.json({success:false, msg: "invalid email format" })
     };
+    if(!Validator.validateContactNo(req.body.contactNo)){
+        return res.json({success: false, msg: "Invalid contact number"})
+    }
     req.body.email = req.body.email.toLocaleLowerCase();
     Manager.findOne({ email: req.user.email })
         .populate({path: 'clinic', select: '-clinicLicenseNo'})
@@ -90,6 +93,24 @@ router.post('/register/receptionist', [passport.authenticate('jwt', {session:fal
      
 });
 
+router.post('/edit/receptionist', [passport.authenticate('jwt', {session:false}), isManager], (req, res, next) =>{
+    if(!Validator.validateContactNo(req.body.contactNo)){
+        return res.json({success: false, msg: "Invalid contact number"})
+    }
+    Receptionist.findOne({nric: req.body.nric, clinic: req.user.clinic}, (err, receptionist) => {
+        if(err)
+            res.json({success: false, msg: err});
+        if(receptionist){
+            receptionist.firstName = req.body.firstName;
+            receptionist.lastName = req.body.lastName;
+            receptionist.contactNo = req.body.contactNo;
+            receptionist.address = req.body.address;
+            receptionist.save();
+            res.json({success: true, msg: "Receptionist updated"});
+        }
+    });
+});
+
 router.post('/register/doctor', [passport.authenticate('jwt', {session:false}), isManager], (req, res, next) => { 
     if(!Validator.validateNric(req.body.nric)){
         return res.json({success:false, msg: "invalid ic number!"});
@@ -97,6 +118,9 @@ router.post('/register/doctor', [passport.authenticate('jwt', {session:false}), 
     if(!Validator.validateEmail(req.body.email)) {
         return res.json({success:false, msg: "invalid email format" })
     };
+    if(!Validator.validateContactNo(req.body.contactNo)){
+        return res.json({success: false, msg: "Invalid contact number"})
+    }
     req.body.email = req.body.email.toLocaleLowerCase();
     Manager.findOne({ email: req.user.email })
         .populate({path: 'clinic', select: '-clinicLicenseNo'})
@@ -144,6 +168,39 @@ router.post('/register/doctor', [passport.authenticate('jwt', {session:false}), 
         })
      
 });
+router.post('/remove/receptionist', [passport.authenticate('jwt', {session:false}), isManager], (req, res, next) =>{
+    if(!Validator.validateNric(req.body.nric)) {
+        return res.json({success:false, msg: "invalid ic number!"});
+    }
+    Receptionist.findOneAndDelete({nric: req.body.nric, clinic: req.user.clinic}, (err, deleted) => {
+        if(err) {
+            return res.json({success: false, msg: err})
+        }
+        if(deleted){
+            return res.json({success: true, msg: "Receptionist successfully removed and deleted"})
+        }
+    })
+});
+
+
+
+router.post('/edit/doctor', [passport.authenticate('jwt', {session:false}), isManager], (req, res, next) =>{
+    if(!Validator.validateContactNo(req.body.contactNo)){
+        return res.json({success: false, msg: "Invalid contact number"})
+    }
+    Doctor.findOne({nric: req.body.nric, clinic: req.user.clinic}, (err, doctor) => {
+        if(err)
+            res.json({success: false, msg: err});
+        if(doctor){
+            doctor.firstName = req.body.firstName;
+            doctor.lastName = req.body.lastName;
+            doctor.contactNo = req.body.contactNo;
+            doctor.address = req.body.address;
+            doctor.save();
+            res.json({success: true, msg: "Doctor updated"});
+        }
+    });
+});
 
 router.get('/profile', [passport.authenticate('jwt', {session:false}), isManager], (req, res, next) => {
     req.user.password = undefined;
@@ -163,7 +220,7 @@ router.get('/clinic/team', [passport.authenticate('jwt', {session:false}), isMan
         .select('-password').exec(function (err, receptionists){
             Doctor.find({ clinic: req.user.clinic})
                 .select('-password').exec(function (err, doctors){
-                    res.send({'receptionists': receptionists, 'doctors': doctors}).status(201);
+                    res.send({'success': true, 'receptionists': receptionists, 'doctors': doctors}).status(201);
                 });
         }); 
 });

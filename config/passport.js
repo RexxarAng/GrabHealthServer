@@ -5,12 +5,12 @@ const Doctor = require('../models/doctor');
 const Receptionist = require('../models/receptionist');
 const Admin = require('../models/admin');
 const config = require('../config/database');
+
 module.exports = function(passport){
     let opts = {};
     opts.jwtFromRequest = ExtractJwt.fromAuthHeaderWithScheme("jwt");
     opts.secretOrKey = config.secret;
     passport.use(new JwtStrategy(opts, (jwt_payload, done) => {
-        console.log(jwt_payload);
         if(jwt_payload.role == "Manager"){
             currentRole = Manager;
         } else if(jwt_payload.role == "Receptionist") {

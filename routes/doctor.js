@@ -5,7 +5,11 @@ const Clinic = require("../models/clinic");
 const Doctor = require("../models/doctor");
 const Receptionist = require("../models/receptionist");
 const passport = require('passport');
-const multer = require('multer');
+const multer = require('multer'); 
+var DIR = './uploads';
+var upload = multer({ dest: DIR }).single('photo');
+//var watermark = require('image-watermark');
+var watertext = require('watertext'); 
 
 isDoctor = function(req, res, next){
     if(req.user.role == 'Doctor') {
@@ -14,8 +18,6 @@ isDoctor = function(req, res, next){
         res.json({success: false, unauthenticated: true, msg: "Permission denied!"})
     }
 }
-module.exports = router;
-
 
 var storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -45,22 +47,17 @@ var photoUpload = multer({storage: storage}).single('photo')
             }
             // No error occured.
 
-           // watermark.embedWatermark(path, { 'text': 'sample watermark' });
+           //watermark.embedWatermark(fpath, { 'text': 'sample watermark' });
 
             path = req.file.path;
+           // watertext(path, { text: 'Awesome cat' })
+               // .then(function (url) { path = url; });
+          //  console.log("Watermarked!~~~")
             // console.log("file path" + fpath.extname(path));
             return res.send("Upload Completed");
         });
     })
 
 
-    module.exports = router;
-isDoctor = function(req, res, next){
-    if(req.user.role == 'Doctor') {
-        next();
-    } else {
-        res.json({success: false, unauthenticated: true, msg: "Permission denied!"})
-    }
-}
 module.exports = router;
 
