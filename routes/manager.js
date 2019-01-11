@@ -9,7 +9,8 @@ const nodemailer = require('nodemailer');
 const smtpTransport = require('nodemailer-smtp-transport');
 const Validator = require('../validation/validation');
 const password = require('secure-random-password');
-
+const MedicineList = require('../models/medicinelist');
+const Medicine = require('../models/medicine');
 var transporter = nodemailer.createTransport(smtpTransport({
     service: 'gmail',
     auth: {
@@ -225,4 +226,57 @@ router.get('/clinic/team', [passport.authenticate('jwt', {session:false}), isMan
         }); 
 });
 
+
+router.get('/medicineList', [passport.authenticate('jwt', {session:false}), isManager], (req, res, next) => {
+    MedicineList.findOne({clinic: req.user.clinic})
+    .populate({ path: 'list', select: 'name category price effects' })
+    .exec(function (err, medicineList){
+        res.send({'medicineList': medicineList}).status(201);
+    }) 
+});
+
+router.post('/add/medicine', [passport.authenticate('jwt', {session:false}), isManager], (req, res, next) =>{
+    let newMedicine = new Medicine(req.body);
+    MedicineList.findOne({clinic: req.user.clinic}, (err, medicineList) => {
+        if(err)
+            return res.json({success: false, msg: 'Medicine list cannot be found'});
+        if(medicineList){
+            newMedicine.save(function(err, medicine){
+                if(err)
+                    return res.json({success: false, msg: 'Medicine cannot be added'});
+                if(medicine){
+                    medicineList.list.push(medicine._id);
+                    medicineList.save();
+                    return res.json({success: true, msg: "Medicine successfully added"})
+                }
+                else
+                    return res.json({success: false, msg: 'Medicine cannot be added'});
+            });
+        }
+    });
+});
+
+router.post('/remove/medicine', [passport.authenticate('jwt', {session:false}), isManager], (req, res, next) =>{
+    MedicineList.findOne({clinic: req.user.clinic}, (err, medicineList) => {
+        if(err)
+            return res.json({success: false, msg: 'Medicine list cannot be found'});
+        if(medicineList){
+            Medicine.findById(req.body._id, (err1, medicine) => {
+                if(err1)
+                    return res.json({success: false, msg: 'Medicine cannot be found'});
+                medicine.remove(function(err2, medicineRemoved){
+                    if(err2)
+                        return res.json({success: false, msg: 'Medicine cannot be removed'});
+                    if(medicineRemoved){
+                        medicineList.list.remove(medicine._id);
+                        medicineList.save();
+                        return res.json({success: true, msg: "Medicine successfully removed"})
+                    }
+                    else
+                        return res.json({success: false, msg: 'Medicine cannot be removed'});
+                });
+            });
+        }
+    });
+});
 module.exports = router;

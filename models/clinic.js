@@ -5,6 +5,7 @@ const uniqueValidator = require('mongoose-unique-validator');
 const Manager = require('./manager');
 const Receptionist = require('./receptionist');
 const Doctor = require('./doctor');
+const MedicineList = require('./medicinelist');
 const Schema = mongoose.Schema;
 
 const ClinicSchema = mongoose.Schema({
@@ -50,6 +51,7 @@ const ClinicSchema = mongoose.Schema({
 ClinicSchema.pre('remove', function(next) {
     // 'this' is the client being removed. Provide callbacks here if you want
     // to be notified of the calls' result.
+    MedicineList.deleteOne({clinic: this._id}).exec();
     Manager.deleteOne({clinic: this._id}).exec();
     Doctor.deleteMany({clinic: this._id}).exec();
     Receptionist.deleteMany({clinic: this._id}).exec();
