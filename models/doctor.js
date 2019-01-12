@@ -68,8 +68,8 @@ module.exports.getUserByNric = function(nric, callback) {
     Doctor.findOne(query, callback);
 }
 
-module.exports.getUserByEmail = function(email, callback) {
-    const query = {email: email};
+module.exports.getUserByEmail = function (email, callback) {
+    const query = { email: email };
     Doctor.findOne(query, callback);
 }
 
