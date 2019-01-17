@@ -205,6 +205,75 @@ router.post('/createPatient', [passport.authenticate('jwt', {session:false}), is
 });
 
 
+//edit patient details
+router.post('/editPatientInfo', [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {    
+    if(!Validator.validateFirstName(req.body.firstName)){
+        return res.json({success: false, msg: "Invalid first name!"});
+    };
+
+    if(!Validator.validateLastName(req.body.lastName)){
+        return res.json({success: false, msg: "Invalid last name!"});
+    };
+
+    if(!Validator.validateAddress(req.body.address)){
+        return res.json({success: false, msg: "Invalid address!"});
+    };
+
+    if(!Validator.validateNationality(req.body.nationality)) {
+        return res.json({success: false, msg: "Invalid nationality!"});
+    };
+
+    if(!Validator.validateContactNo(req.body.contactNo)) {
+        return res.json({success: false, msg: "Invalid contact no.!"});
+    };
+   
+
+    axios.post('http://localhost:4000/GrabHealthWeb/updateWalkInPatientDetails', {                       
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+        nric: req.body.nric,
+        contactNo: req.body.contactNo,
+        address: req.body.address,
+        dob: req.body.dob,
+        nationality: req.body.nationality,
+        gender: req.body.gender,
+        attach: req.body.attach,
+        isWalkIn: req.body.isWalkIn
+    })
+    .then((res1) => {
+        data = res1['data'];
+        if(data['success']) {
+            Patient.findOne({nric: req.body.patient}, (err, patient) => {
+                if(err){
+                   res.json({success: false, msg: err});
+                }
+                if(patient){
+                   patient.firstName = req.body.firstName;
+                   patient.lastName = req.body.lastName;
+                   patient.nric = req.body.nric;
+                   patient.gender = req.body.gender;
+                   patient.address = req.body.address;
+                   patient.dob = req.body.dob;
+                   patient.nationality = req.body.nationality;
+                   patient.contactNo = req.body.contactNo;
+                   patient.save();
+                   res.json({success: true, msg: "Patient details have been updated"});
+                } else {
+                    return res.json({success: false, msg: "Unable to save changes successfully"});
+                }
+            });
+        } else{
+            return res.json({success: false, msg: 'Patient details cannot be updated successfully!'});
+        }
+    })
+    .catch((error) => {
+        console.log(error);
+        return res.json({success: false, msg: "Some error has occurred"});
+    });
+    
+});
+
+
 //create payment
 router.post('/createPayment', [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
     if(!Validator.validateNric(req.body.patient)){
@@ -242,9 +311,10 @@ router.get("/patient-list", [passport.authenticate('jwt', {session:false}), isRe
 });
 
 
+//add patient to queue
 router.post('/addPatientToQueue', [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
     req.body.clinc = req.user._id;
-    axios.post('http://localhost:4000/GrabHealthWeb/addPatientToQueue', req.body)
+    /*axios.post('http://localhost:4000/GrabHealthWeb/addPatientToQueue', req.body)
     .then((res) => {
         data = res['data'];
         if(data['success']){
@@ -255,6 +325,49 @@ router.post('/addPatientToQueue', [passport.authenticate('jwt', {session:false})
     })
     .catch((error) => {
         return res.json({success: false, msg: 'Something happened connecting to localhost:4000'});
+    });*/
+
+    axios.post('http://localhost:4000/GrabHealthWeb/addPatientToQueue', {                       
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+        nric: req.body.nric,
+        contactNo: req.body.contactNo,
+        address: req.body.address,
+        dob: req.body.dob,
+        nationality: req.body.nationality,
+        gender: req.body.gender
+    })
+    .then((res1) => {
+        data = res1['data'];
+        if(data['success']) {
+            Patient.addUser(addPatientToQueue, (err, patient) => {
+                if(err){
+                    console.log(err);
+                    return res.json({success: false, msg: "Patient already added to queue"});
+                }
+                if(patient){
+                    patient.clinic.push(req.user.clinic);
+                    patient.save(function(err2, addToQueue){
+                        if(err2){
+                            return res.json({success: false, msg: err2});
+                        } else {
+                            if(addToQueue)
+                                return res.json({success: true, msg: 'Patient successfully added to queue!'});
+                            else 
+                                return res.json({success: false, msg: 'Patient cannot be added to queue!'});
+                        }
+                    });          
+                } else {
+                    return res.json({success: false, msg: 'Patient cannot be added to queue!'});
+                }
+            });
+        } else{
+            return res.json({success: false, msg: 'Patient cannot be added!'});
+        }
+    })
+    .catch((error) => {
+        console.log(error);
+        return res.json({success: false, msg: "Some error has occurred"});
     });
   
 });

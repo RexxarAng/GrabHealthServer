@@ -94,7 +94,7 @@ module.exports.validateLastName = function(lastName) {
 
 /* Validation for gender */
 module.exports.validateGender = function(gender) {
-    if (gender.length === '' || gender.length === 0) {
+    if (gender.length === '' || gender.length === 0 || gender.select === '') {
         return false;
     } else {
         return true;
@@ -118,8 +118,11 @@ module.exports.validateDOB = function(dob) {
 
 /* Validation for nationality */
 module.exports.validateNationality = function(nationality) {
-    var re = /[A-Z||a-z]{4,30}/;
-    return re.test(nationality);
+    if (nationality.length === '' || nationality.length === 0 || nationality.select === '') {
+        return false;
+    } else {
+        return true;
+    }
 }
 
 /* Validation for contact no. */
