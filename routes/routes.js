@@ -101,7 +101,7 @@ router.post('/forgetpassword', (req, res) => {
     } else if(role === "Receptionist") {
         currentRole = Receptionist;
     } else if (role === "Doctor") {
-        curentRole = Doctor;
+        currentRole = Doctor;
     } else {
         return res.status(404).json({success: false, msg: "Invalid role."})
     }
