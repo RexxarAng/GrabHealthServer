@@ -46,7 +46,7 @@ router.post('/authenticate', (req, res) => {
     } else if(role === "Receptionist") {
         currentRole = Receptionist;
     } else if (role === "Doctor") {
-        curentRole = Doctor;
+        currentRole = Doctor;
     } else {
         return res.status(404).json({success: false, msg: "Invalid role."})
     }
@@ -94,7 +94,7 @@ router.post('/authenticate', (req, res) => {
 router.post('/forgetpassword', (req, res) => {
     var role = req.body.role;
     var email = req.body.email;
-    var nric = req.body.nric
+    var nric = req.body.nric;
     var currentRole;
     if(role === "Manager"){
         currentRole = Manager;
