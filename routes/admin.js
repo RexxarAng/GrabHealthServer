@@ -199,7 +199,8 @@ router.post('/authenticate', (req, res) => {
                     user: {
                         id: user._id,
                         email: user.email,
-                        role: role                    }
+                        role: role                    
+                    }
                 });
             } else {
                 return res.status(404).json({success: false, msg: "Invalid email or password entered."});
@@ -207,6 +208,7 @@ router.post('/authenticate', (req, res) => {
         });
     });
 });
+
 //Create the admin for your database
 router.post('/createFirstAdmin', (req, res, next) => {
     let newAdmin = new Admin({
@@ -341,8 +343,9 @@ router.post('/clinic/register', [passport.authenticate('jwt', {session:false}), 
 
 router.get("/clinicList", [passport.authenticate('jwt', {session:false}), isAdmin, isNotBlackListedToken], (req, res, next) => {
     Clinic.find({})
-        .populate({ path: 'clinicManager', select: 'firstName lastName email _id address contactNo' })
+        .populate({ path: 'clinicManager', select: '-password' })
         .exec(function (err, clinics){
+            console.log(clinics);
             res.send({'clinics': clinics}).status(201);
         }) 
 });
