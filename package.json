@@ -15,7 +15,7 @@
     "body-parser": "*",
     "cors": "*",
     "crypto": "^1.0.1",
-    "express": "*",
+    "express": "^4.16.4",
     "express-body-cleaner": "^1.0.1",
     "express-mongo-sanitize": "*",
     "helmet": "*",
