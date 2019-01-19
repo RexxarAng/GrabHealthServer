@@ -10,6 +10,8 @@ var DIR = './uploads';
 var upload = multer({ dest: DIR }).single('photo');
 //var watermark = require('image-watermark');
 var watertext = require('watertext'); 
+const MedicineList = require('../models/medicinelist');
+
 
 isDoctor = function(req, res, next){
     if(req.user.role == 'Doctor') {
@@ -57,6 +59,24 @@ var photoUpload = multer({storage: storage}).single('photo')
             return res.send("Upload Completed");
         });
     })
+
+router.get('/medicineList', [passport.authenticate('jwt', { session: false }), isDoctor], (req, res, next) => {
+    MedicineList.findOne({ clinic: req.user.clinic })
+        .populate({ path: 'list', select: 'name category price effects' })
+        .exec(function (err, medicineList) {
+            res.send({ 'medicineList': medicineList }).status(201);
+        })
+});
+
+router.get('/next-patient', [passport.authenticate('jwt', { session: false }), isDoctor], (req, res, next) => {
+    MedicineList.findOne({ clinic: req.user.clinic })
+        .populate({ path: 'list', select: 'name category price effects' })
+        .exec(function (err, medicineList) {
+            console.log("HERE:");
+            console.log({clinic: req.user.clinic});
+            res.send({ 'medicineList': medicineList }).status(201);
+        })
+});
 
 
 module.exports = router;

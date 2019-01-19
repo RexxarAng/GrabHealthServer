@@ -6,7 +6,7 @@ const Validator = require('../validation/validation');
 
 const Schema = mongoose.Schema;
 
-const PatientSchema = mongoose.Schema({
+const WalkInPatientSchema = mongoose.Schema({
     firstName: {
         type: String,
         required: true
@@ -19,9 +19,6 @@ const PatientSchema = mongoose.Schema({
         type: String,
         required: true,
         unique: true
-    },
-    email: {
-        type: String
     },
     password: {
         type: String
@@ -48,26 +45,29 @@ const PatientSchema = mongoose.Schema({
     },
     email:{
         type: String,
-        required: true,
-        unique: true
+        required: true
+    },
+    clinic: {
+        type: Schema.Types.ObjectId,
+        ref: 'Clinic'
     }
 
 });
 
-const Patient = module.exports = mongoose.model('Patient', PatientSchema);
+const WalkInPatient = module.exports = mongoose.model('WalkInPatient', WalkInPatientSchema);
 
 module.exports.getUserById = function(id, callback) {
-    Patient.findById(id, {password: 0}, callback);
+    WalkInPatient.findById(id, {password: 0}, callback);
 }
 
 module.exports.getUserByNric = function(nric, callback) {
     const query = {nric: nric};
-    Patient.findOne(query, callback);
+    WalkInPatient.findOne(query, callback);
 }
 
 module.exports.getUserByEmail = function(email, callback) {
     const query = {email: email};
-    Patient.findOne(query, callback);
+    WalkInPatient.findOne(query, callback);
 }
 
 module.exports.addUser = function(newPatient, callback) {
@@ -82,5 +82,5 @@ module.exports.comparePassword = function(candidatePassword, hash, callback) {
     });
 }
 
-PatientSchema.plugin(uniqueValidator, { message: "is already taken. "});
+WalkInPatientSchema.plugin(uniqueValidator, { message: "is already taken. "});
 
