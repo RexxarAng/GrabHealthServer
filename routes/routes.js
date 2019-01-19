@@ -32,8 +32,16 @@ var transporter = nodemailer.createTransport(smtpTransport({
     text: 'Enter text'
   };
 
+isNotBlackListedToken = function(req, res, next){
+    BlackList.findOne({'token': req.headers.authorization}, (err, token) => {
+        if(token){
+            res.json({success: false, unauthenticated: true, msg: "Blacklisted token!"})
+        } else {
+            next();
+        }
+    });
+}
 router.post('/authenticate', (req, res) => {
-    console.log(req.body);
     var role = req.body.role;
     const email = req.body.email;
     const password = req.body.password;
@@ -89,6 +97,11 @@ router.post('/authenticate', (req, res) => {
             }
         });
     });
+});
+
+router.post('/getRole', [passport.authenticate('jwt', {session:false}), isNotBlackListedToken], (req, res) => {
+    return res.json({success: true, role: req.user.role});
+
 });
 
 router.post('/forgetpassword', (req, res) => {

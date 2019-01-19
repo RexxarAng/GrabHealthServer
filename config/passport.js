@@ -16,7 +16,7 @@ module.exports = function(passport){
         } else if(jwt_payload.role == "Receptionist") {
             currentRole = Receptionist;
         } else if (jwt_payload.role == "Doctor") {
-            curentRole = Doctor;
+            currentRole = Doctor;
         } else if (jwt_payload.role == "Admin") {
             currentRole = Admin;
         }
