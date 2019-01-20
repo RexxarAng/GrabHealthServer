@@ -337,6 +337,7 @@ router.post('/createPayment', [passport.authenticate('jwt', {session:false}), is
 
 // Add patient to queue
 router.post('/addPatientToQueue', [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
+    console.log(req);
     req.body.clinic = req.user.clinic;
 
     axios.post(webserverurl + '/GrabHealthWeb/addPatientToQueue', {                       
@@ -390,9 +391,11 @@ router.post('/addPatientToQueue', [passport.authenticate('jwt', {session:false})
 
 // Display patients in queue <stopped here>
 router.get("/queue-list", [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
+    console.log(res);
     req.body.clinic = req.body.clinic;
     
     axios.get('http://localhost:4000/GrabHealthWeb/addPatientToQueue', {
+        params: {
         firstName: req.body.firstName,
         lastName: req.body.lastName,
         nric: req.body.nric,
@@ -404,6 +407,7 @@ router.get("/queue-list", [passport.authenticate('jwt', {session:false}), isRece
         email: req.body.email,
         clinic: req.user.clinic,
         queueNo: req.body.queueNo
+        }
     }
     .then((res1) => {
         data = res1['data'];
@@ -411,8 +415,8 @@ router.get("/queue-list", [passport.authenticate('jwt', {session:false}), isRece
         if(data['success']) {
             Patient.findOne({nric: req.body.nric})
             .populate({ select: 'firstName lastName nric email contactNo address dob nationality queueNo' })
-            .exec(function (err, queueList) {
-                res.send({ 'queueList': queueList }).status(201);
+            .exec(function (err, queuelist) {
+                res.send({ 'queueList': queuelist }).status(201);
             })
         } else{
             return res.json({success: false, msg: data['msg']});
