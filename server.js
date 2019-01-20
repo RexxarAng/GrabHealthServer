@@ -14,6 +14,13 @@ const manager = require("./routes/manager");
 const receptionist = require("./routes/receptionist");
 const admin = require("./routes/admin");
 const bodyCleaner = require('express-body-cleaner');
+const env_config = require('dotenv').config(); 
+var fs = require('fs');
+
+if(env_config.error){
+    throw env_config.error
+}
+console.log(env_config.parsed);
 
 mongoose.connect(config.database, {useNewUrlParser: true, useCreateIndex: true });
 mongoose.Promise = global.Promise;
@@ -27,7 +34,7 @@ mongoose.connection.on('error', (err) => {
 });
 
 const app = express();
-const port = 4560;
+const port = process.env.PORT || 4560;
 
 app.use(helmet());
 app.use(cors());
@@ -88,9 +95,17 @@ app.get('/', (req, res) => {
     res.send('Invalid endpoint');
 })
 
-app.listen(port, () => {
-    console.log("Server is running on " + port + " port");
-});
+if (process.env.HTTPS) {
+    https.createServer({
+        key: fs.readFileSync(process.env.HTTPS_KEY),
+        cert: fs.readFileSync(process.env.HTTPS_CERT)
+    }, app)
+    .listen(port, () => console.log('Express https server running on port ' + port));
+}
+else {
+    app.listen(port, () => console.log('Express server running on port ' + port));
+}
+
 
 // httpApp = https.createServer(options, app)
 // .listen(port, function(){

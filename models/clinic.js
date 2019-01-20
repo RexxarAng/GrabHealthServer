@@ -40,6 +40,14 @@ const ClinicSchema = mongoose.Schema({
         ref: 'Manager',
         required: true
     },
+    receptionists: [{
+        type: Schema.Types.ObjectId,
+        ref: 'Receptionist'
+    }],
+    doctors: [{
+        type: Schema.Types.ObjectId,
+        ref: 'Doctor'
+    }],
     consultationFee: {
         type: Number,
         default: 20

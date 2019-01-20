@@ -16,8 +16,13 @@ const MedicineSchema = mongoose.Schema({
     },
     effects: {
         type: String
+    },
+    clinic:{
+        type: Schema.Types.ObjectId,
+        ref: 'Clinic'
     }
 
 });
 
 const Medicine = module.exports = mongoose.model('Medicine', MedicineSchema);
+

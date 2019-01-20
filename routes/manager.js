@@ -83,6 +83,15 @@ router.post('/register/receptionist', [passport.authenticate('jwt', {session:fal
                                 Receptionist.findByIdAndDelete(receptionist._id);
                                 return res.json({success: false, msg: "Failed to send email"});
                             } else {
+                                Clinic.findById(req.user.clinic, (err, clinic) => {
+                                    if(err)
+                                        console.log(error);
+                                    if(clinic){
+                                        clinic.receptionists.push(receptionist._id)
+                                        clinic.save();
+                                    }
+
+                                });
                                 console.log('Email sent: ' + info.response);
                             }
                         });
@@ -110,6 +119,28 @@ router.post('/edit/receptionist', [passport.authenticate('jwt', {session:false})
             res.json({success: true, msg: "Receptionist updated"});
         }
     });
+});
+
+router.post('/remove/receptionist', [passport.authenticate('jwt', {session:false}), isManager], (req, res, next) =>{
+    if(!Validator.validateNric(req.body.nric)) {
+        return res.json({success:false, msg: "invalid ic number!"});
+    }
+    Receptionist.findOneAndDelete({nric: req.body.nric, clinic: req.user.clinic}, (err, deleted) => {
+        if(err) {
+            return res.json({success: false, msg: err})
+        }
+        if(deleted){
+            Clinic.findById(req.user.clinic, (err, clinic) => {
+                if(err)
+                    console.log(error);
+                if(clinic){
+                    clinic.receptionists.remove(deleted._id)
+                    clinic.save();
+                }
+            });
+            return res.json({success: true, msg: "Receptionist successfully removed and deleted"})
+        }
+    })
 });
 
 router.post('/register/doctor', [passport.authenticate('jwt', {session:false}), isManager], (req, res, next) => { 
@@ -159,6 +190,14 @@ router.post('/register/doctor', [passport.authenticate('jwt', {session:false}), 
                                 Doctor.findByIdAndDelete(doctor._id);
                                 return res.json({success: false, msg: "Failed to send email"});
                             } else {
+                                Clinic.findById(req.user.clinic, (err, clinic) => {
+                                    if(err)
+                                        console.log(error);
+                                    if(clinic){
+                                        clinic.doctors.push(doctor._id);
+                                        clinic.save();
+                                    }
+                                });
                                 console.log('Email sent: ' + info.response);
                             }
                         });
@@ -169,20 +208,6 @@ router.post('/register/doctor', [passport.authenticate('jwt', {session:false}), 
         })
      
 });
-router.post('/remove/receptionist', [passport.authenticate('jwt', {session:false}), isManager], (req, res, next) =>{
-    if(!Validator.validateNric(req.body.nric)) {
-        return res.json({success:false, msg: "invalid ic number!"});
-    }
-    Receptionist.findOneAndDelete({nric: req.body.nric, clinic: req.user.clinic}, (err, deleted) => {
-        if(err) {
-            return res.json({success: false, msg: err})
-        }
-        if(deleted){
-            return res.json({success: true, msg: "Receptionist successfully removed and deleted"})
-        }
-    })
-});
-
 
 
 router.post('/edit/doctor', [passport.authenticate('jwt', {session:false}), isManager], (req, res, next) =>{
@@ -201,6 +226,28 @@ router.post('/edit/doctor', [passport.authenticate('jwt', {session:false}), isMa
             res.json({success: true, msg: "Doctor updated"});
         }
     });
+});
+
+router.post('/remove/doctor', [passport.authenticate('jwt', {session:false}), isManager], (req, res, next) =>{
+    if(!Validator.validateNric(req.body.nric)) {
+        return res.json({success:false, msg: "invalid ic number!"});
+    }
+    Doctor.findOneAndDelete({nric: req.body.nric, clinic: req.user.clinic}, (err, deleted) => {
+        if(err) {
+            return res.json({success: false, msg: err})
+        }
+        if(deleted){
+            Clinic.findById(req.user.clinic, (err, clinic) => {
+                if(err)
+                    console.log(error);
+                if(clinic){
+                    clinic.doctors.remove(deleted._id)
+                    clinic.save();
+                }
+            });
+            return res.json({success: true, msg: "Receptionist successfully removed and deleted"})
+        }
+    })
 });
 
 router.get('/profile', [passport.authenticate('jwt', {session:false}), isManager], (req, res, next) => {
@@ -236,6 +283,7 @@ router.get('/medicineList', [passport.authenticate('jwt', {session:false}), isMa
 });
 
 router.post('/add/medicine', [passport.authenticate('jwt', {session:false}), isManager], (req, res, next) =>{
+    req.body.clinic = req.user.clinic;
     let newMedicine = new Medicine(req.body);
     MedicineList.findOne({clinic: req.user.clinic}, (err, medicineList) => {
         if(err)

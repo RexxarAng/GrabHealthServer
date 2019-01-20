@@ -344,9 +344,10 @@ router.post('/clinic/register', [passport.authenticate('jwt', {session:false}), 
 router.get("/clinicList", [passport.authenticate('jwt', {session:false}), isAdmin, isNotBlackListedToken], (req, res, next) => {
     Clinic.find({})
         .populate({ path: 'clinicManager', select: '-password' })
+        .populate({ path: 'doctors', select: '-password'})
+        .populate({ path: 'receptionists', select: '-password'})
         .exec(function (err, clinics){
-            console.log(clinics);
-            res.send({'clinics': clinics}).status(201);
+            res.json({'clinics': clinics}).status(201);
         }) 
 });
 
