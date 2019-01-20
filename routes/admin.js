@@ -18,11 +18,17 @@ var crypto = require('crypto');
 const passwordModule = require('secure-random-password');
 const BlackList = require('../models/blacklist');
 const MedicineList = require('../models/medicinelist');
+const env_config = require('dotenv').config(); 
+
 algorithm = 'aes-256-gcm';
 secretKey = 'D87314A83ABFB2312CF8F5386F62A6VS';
 // do not use a global iv for production, 
 // generate a new one for each encryption
-
+if(process.env.webserverurl){
+    var webserverurl = process.env.webserverurl;
+} else {
+    var webserverurl =  'http://localhost:4000';
+}
 function encrypt(text, iv) {
   var cipher = crypto.createCipheriv(algorithm, secretKey, iv)
   var encrypted = cipher.update(text, 'utf8', 'hex')
@@ -304,7 +310,7 @@ router.post('/clinic/register', [passport.authenticate('jwt', {session:false}), 
                     mailOptions.to = manager.email;
                     transporter.sendMail(mailOptions, function(error, info){
                         externalFail = false;
-                        axios.post('http://localhost:4000/GrabHealthWeb/createClinic', {
+                        axios.post(webserverurl + '/GrabHealthWeb/createClinic', {
                             _id: clinic._id,
                             name: req.body.clinic.name,
                             address: req.body.clinic.address,
@@ -362,7 +368,7 @@ router.post("/clinic/remove", [passport.authenticate('jwt', {session:false}), is
                     return res.json({success: false, msg: 'Something happened'});
                 }
                 if(removed){
-                    axios.post('http://localhost:4000/GrabHealthWeb/removeClinic', {
+                    axios.post(webserverurl + '/GrabHealthWeb/removeClinic', {
                         clinicLicenseNo: req.body.clinicLicenseNo
                         })
                         .then((res) => {
