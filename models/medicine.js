@@ -5,8 +5,7 @@ const Schema = mongoose.Schema;
 
 const MedicineSchema = mongoose.Schema({
     name: {
-        type: String,
-        unique: true
+        type: String
     },
     price: {
         type: Schema.Types.Double

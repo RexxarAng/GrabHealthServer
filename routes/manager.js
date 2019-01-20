@@ -289,17 +289,26 @@ router.post('/add/medicine', [passport.authenticate('jwt', {session:false}), isM
         if(err)
             return res.json({success: false, msg: 'Medicine list cannot be found'});
         if(medicineList){
-            newMedicine.save(function(err, medicine){
+            Medicine.findOne({name: req.body.name}, (err, medicine) => {
                 if(err)
-                    return res.json({success: false, msg: 'Medicine cannot be added'});
-                if(medicine){
-                    medicineList.list.push(medicine._id);
-                    medicineList.save();
-                    return res.json({success: true, msg: "Medicine successfully added"})
+                    console.log(err);
+                if(!medicine){
+                    newMedicine.save(function(err, medicine){
+                        if(err)
+                            return res.json({success: false, msg: 'Medicine cannot be added'});
+                        if(medicine){
+                            medicineList.list.push(medicine._id);
+                            medicineList.save();
+                            return res.json({success: true, msg: "Medicine successfully added"})
+                        }
+                        else
+                            return res.json({success: false, msg: 'Medicine cannot be added'});
+                    });
+                } else {
+                    console.log(medicine);
+                    return res.json({success: false, msg: 'Medicine name already taken'});
                 }
-                else
-                    return res.json({success: false, msg: 'Medicine cannot be added'});
-            });
+            })
         }
     });
 });
