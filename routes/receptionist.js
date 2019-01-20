@@ -9,7 +9,13 @@ const WalkInPatient = require('../models/walkinpatient');
 const Validator = require('../validation/validation');
 const axios = require('axios');
 const Patient = require('../models/patient');
+const env_config = require('dotenv').config(); 
 
+if(process.env.webserverurl){
+    var webserverurl = process.env.webserverurl
+} else {
+    var webserverurl =  'http://localhost:4000';
+}
 isReceptionist = function(req, res, next){
     if(req.user.role == 'Receptionist') {
         next();
@@ -237,7 +243,7 @@ router.post('/editPatientInfo', [passport.authenticate('jwt', {session:false}), 
         return res.json({success: false, msg: "Invalid email!"});
     };
 
-    axios.post('http://localhost:4000/GrabHealthWeb/updateWalkInPatientDetails', {                       
+    axios.post(webserverurl + '/GrabHealthWeb/updateWalkInPatientDetails', {                       
         firstName: req.body.firstName,
         lastName: req.body.lastName,
         nric: req.body.nric,
@@ -333,7 +339,7 @@ router.get("/patient-list", [passport.authenticate('jwt', {session:false}), isRe
 router.post('/addPatientToQueue', [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
     req.body.clinic = req.user.clinic;
 
-    axios.post('http://localhost:4000/GrabHealthWeb/addPatientToQueue', {                       
+    axios.post(webserverurl + '/GrabHealthWeb/addPatientToQueue', {                       
         firstName: req.body.firstName,
         lastName: req.body.lastName,
         nric: req.body.nric,
