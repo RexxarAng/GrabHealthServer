@@ -50,6 +50,10 @@ const WalkInPatientSchema = mongoose.Schema({
     clinic: {
         type: Schema.Types.ObjectId,
         ref: 'Clinic'
+    },
+    queueNo: {
+        type: Number,
+        required: false
     }
 
 });

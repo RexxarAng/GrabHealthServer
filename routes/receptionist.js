@@ -10,6 +10,7 @@ const Validator = require('../validation/validation');
 const axios = require('axios');
 const Patient = require('../models/patient');
 
+
 isReceptionist = function(req, res, next){
     if(req.user.role == 'Receptionist') {
         next();
@@ -380,5 +381,67 @@ router.post('/addPatientToQueue', [passport.authenticate('jwt', {session:false})
     });
   
 });
+
+
+// Display patients in queue <stopped here>
+/*router.get("/queue-list", [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
+    req.body.clinic = req.body.clinic;
+
+    axios.get('http://localhost:4000/GrabHealthWeb/addPatientToQueue', {
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+        nric: req.body.nric,
+        contactNo: req.body.contactNo,
+        address: req.body.address,
+        dob: req.body.dob,
+        nationality: req.body.nationality,
+        gender: req.body.gender,
+        email: req.body.email,
+        clinic: req.user.clinic,
+        queueNo: req.body.queueNo
+    }
+    .then((res1) => {
+        data = res1['data'];
+        console.log(data);
+        if(data['success']) {
+            Patient.findOne({ clinic: req.user.clinic })
+            .populate({ path: 'list', select: 'name category price effects' })
+            .exec(function (err, medicineList) {
+                res.send({ 'medicineList': medicineList }).status(201);
+            })
+        } else{
+            return res.json({success: false, msg: data['msg']});
+        }
+    })                                                                                                                                                                                                                                                                           
+    .catch((error) => {
+        console.log(error);
+        return res.json({success: false, msg: "Some error has occurred"});
+    })
+    )
+
+});*/
+
+
+// Display patients in queue
+/*router.get("/queue-list", [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
+    Queue.find({"clinic": req.user.clinic}).sort({"firstName":1}).limit().exec(function(err,patients) {
+        if(err)
+            res.send({success: false, msg: err}).status(404);
+        if(patients)
+            res.send({success: true, 'patients': patients}).status(201);
+        else
+            res.send({success: false, msg: 'Something happened'}).status(404);
+    });
+});*/
+
+
+
+// View pending approval list <use axios.get>
+
+
+// Accept appointment request <use axios.post>
+
+
+// Reject appointment request <use axios.post>
 
 module.exports = router;
