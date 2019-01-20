@@ -50,6 +50,10 @@ const PatientSchema = mongoose.Schema({
         type: String,
         required: true,
         unique: true
+    },
+    queueNo: {
+        type: Number,
+        required: false
     }
 
 });
