@@ -4,6 +4,7 @@ const Manager = require("../models/manager");
 const Clinic = require("../models/clinic");
 const Doctor = require("../models/doctor");
 const Receptionist = require("../models/receptionist");
+const dispensemedicine = require("../models/dispensemedicine");
 const passport = require('passport');
 const multer = require('multer'); 
 var DIR = './uploads';
@@ -11,6 +12,8 @@ var upload = multer({ dest: DIR }).single('photo');
 //var watermark = require('image-watermark');
 var watertext = require('watertext'); 
 const MedicineList = require('../models/medicinelist');
+const Visit = require('../models/visit');
+
 
 
 isDoctor = function(req, res, next){
@@ -68,15 +71,37 @@ router.get('/medicineList', [passport.authenticate('jwt', { session: false }), i
         })
 });
 
-router.get('/next-patient', [passport.authenticate('jwt', { session: false }), isDoctor], (req, res, next) => {
-    MedicineList.findOne({ clinic: req.user.clinic })
-        .populate({ path: 'list', select: 'name category price effects' })
-        .exec(function (err, medicineList) {
-            console.log("HERE:");
-            console.log({clinic: req.user.clinic});
-            res.send({ 'medicineList': medicineList }).status(201);
-        })
+// router.get('/next-patient', [passport.authenticate('jwt', { session: false }), isDoctor], (req, res, next) => {
+//     MedicineList.findOne({ clinic: req.user.clinic })
+//         .populate({ path: 'list', select: 'name category price effects' })
+//         .exec(function (err, medicineList) {
+//             console.log("HERE:");
+//             console.log({clinic: req.user.clinic});
+//             res.send({ 'medicineList': medicineList }).status(201);
+//         })
+// });
+
+router.get('/reasonForVisit', [passport.authenticate('jwt', { session: false }), isDoctor], (req, res, next) => {
+    Visit.findOne({ Visit: req.reasonForVisit }), (err, reasonForVisit) =>  {
+    if (err)
+        res.send({ success: false, msg: err }).status(404);
+    if (reasonForVisit)
+        res.send({ success: true, 'Visit': reasonForVisit }).status(201);
+    else
+        res.send({ success: false, msg: 'Something happened' }).status(404);
+    }
+
 });
+
+router.post('/add/reasonForVisit', [passport.authenticate('jwt', { session: false }), isDoctor], (req, res, next) => {
+        console.log("here:" + req.body.reasonForVisit); 
+        let reasonForVisit = new Visit({
+            reasonForVisit: req.body.reasonForVisit
+        })
+        return res.json({ success: true, msg: "Reason for Visit successfully added" })
+
+
+        })
 
 
 module.exports = router;
