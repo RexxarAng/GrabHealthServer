@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const config = require("../config/database");
 require('mongoose-double')(mongoose);
 const Schema = mongoose.Schema;
 
@@ -21,3 +22,6 @@ const VisitSchema = mongoose.Schema({
 });
 
 const Visit = module.exports = mongoose.model('Visit', VisitSchema);
+module.exports.addReasonForVisit = function (reasonForVisit, callback) {
+    reasonForVisit.save(callback);
+}

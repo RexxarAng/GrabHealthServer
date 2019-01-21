@@ -94,12 +94,13 @@ router.get('/reasonForVisit', [passport.authenticate('jwt', { session: false }),
 });
 
 router.post('/add/reasonForVisit', [passport.authenticate('jwt', { session: false }), isDoctor], (req, res, next) => {
-        console.log("here:" + req.body.reasonForVisit); 
         let reasonForVisit = new Visit({
             reasonForVisit: req.body.reasonForVisit
         })
-        return res.json({ success: true, msg: "Reason for Visit successfully added" })
-
+            reasonForVisit.save(); 
+          console.log("here:" + req.body.reasonForVisit); 
+          return res.json({ success: true, msg: "Reason for Visit successfully added" })
+        
 
         })
 

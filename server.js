@@ -17,10 +17,10 @@ const bodyCleaner = require('express-body-cleaner');
 const env_config = require('dotenv').config(); 
 var fs = require('fs');
 
-if(env_config.error){
-    throw env_config.error
-}
-console.log(env_config.parsed);
+// if(env_config.error){
+//     throw env_config.error
+// }
+// console.log(env_config.parsed);
 
 mongoose.connect(config.database, {useNewUrlParser: true, useCreateIndex: true });
 mongoose.Promise = global.Promise;
