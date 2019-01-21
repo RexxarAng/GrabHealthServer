@@ -9,8 +9,13 @@ const WalkInPatient = require('../models/walkinpatient');
 const Validator = require('../validation/validation');
 const axios = require('axios');
 const Patient = require('../models/patient');
+const env_config = require('dotenv').config(); 
 
-
+if(process.env.webserverurl){
+    var webserverurl = process.env.webserverurl
+} else {
+    var webserverurl =  'http://localhost:4000';
+}
 isReceptionist = function(req, res, next){
     if(req.user.role == 'Receptionist') {
         next();
@@ -238,7 +243,7 @@ router.post('/editPatientInfo', [passport.authenticate('jwt', {session:false}), 
         return res.json({success: false, msg: "Invalid email!"});
     };
 
-    axios.post('http://localhost:4000/GrabHealthWeb/updateWalkInPatientDetails', {                       
+    axios.post(webserverurl + '/GrabHealthWeb/updateWalkInPatientDetails', {                       
         firstName: req.body.firstName,
         lastName: req.body.lastName,
         nric: req.body.nric,
@@ -293,6 +298,19 @@ router.post('/editPatientInfo', [passport.authenticate('jwt', {session:false}), 
 });
 
 
+// Display patient list
+router.get("/patient-list", [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
+    WalkInPatient.find({"clinic": req.user.clinic}).sort({"firstName":1}).limit().exec(function(err,patients) {
+        if(err)
+            res.send({success: false, msg: err}).status(404);
+        if(patients)
+            res.send({success: true, 'patients': patients}).status(201);
+        else
+            res.send({success: false, msg: 'Something happened'}).status(404);
+    });
+});
+
+
 // Create payment
 router.post('/createPayment', [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
     if(!Validator.validateNric(req.body.patient)){
@@ -317,24 +335,12 @@ router.post('/createPayment', [passport.authenticate('jwt', {session:false}), is
 
 
 
-// Display patient list
-router.get("/patient-list", [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
-    WalkInPatient.find({"clinic": req.user.clinic}).sort({"firstName":1}).limit().exec(function(err,patients) {
-        if(err)
-            res.send({success: false, msg: err}).status(404);
-        if(patients)
-            res.send({success: true, 'patients': patients}).status(201);
-        else
-            res.send({success: false, msg: 'Something happened'}).status(404);
-    });
-});
-
-
-// Add patient to queue <TBC>
+// Add patient to queue
 router.post('/addPatientToQueue', [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
+    console.log(req);
     req.body.clinic = req.user.clinic;
 
-    axios.post('http://localhost:4000/GrabHealthWeb/addPatientToQueue', {                       
+    axios.post(webserverurl + '/GrabHealthWeb/addPatientToQueue', {                       
         firstName: req.body.firstName,
         lastName: req.body.lastName,
         nric: req.body.nric,
@@ -384,10 +390,12 @@ router.post('/addPatientToQueue', [passport.authenticate('jwt', {session:false})
 
 
 // Display patients in queue <stopped here>
-/*router.get("/queue-list", [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
+router.get("/queue-list", [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
+    console.log(res);
     req.body.clinic = req.body.clinic;
-
+    
     axios.get('http://localhost:4000/GrabHealthWeb/addPatientToQueue', {
+        params: {
         firstName: req.body.firstName,
         lastName: req.body.lastName,
         nric: req.body.nric,
@@ -399,15 +407,16 @@ router.post('/addPatientToQueue', [passport.authenticate('jwt', {session:false})
         email: req.body.email,
         clinic: req.user.clinic,
         queueNo: req.body.queueNo
+        }
     }
     .then((res1) => {
         data = res1['data'];
         console.log(data);
         if(data['success']) {
-            Patient.findOne({ clinic: req.user.clinic })
-            .populate({ path: 'list', select: 'name category price effects' })
-            .exec(function (err, medicineList) {
-                res.send({ 'medicineList': medicineList }).status(201);
+            Patient.findOne({nric: req.body.nric})
+            .populate({ select: 'firstName lastName nric email contactNo address dob nationality queueNo' })
+            .exec(function (err, queuelist) {
+                res.send({ 'queueList': queuelist }).status(201);
             })
         } else{
             return res.json({success: false, msg: data['msg']});
@@ -419,7 +428,7 @@ router.post('/addPatientToQueue', [passport.authenticate('jwt', {session:false})
     })
     )
 
-});*/
+});
 
 
 // Display patients in queue
