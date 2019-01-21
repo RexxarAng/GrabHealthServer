@@ -13,6 +13,8 @@ var upload = multer({ dest: DIR }).single('photo');
 var watertext = require('watertext'); 
 const MedicineList = require('../models/medicinelist');
 const Visit = require('../models/visit');
+const patient = require('../models/patient');
+
 
 
 
@@ -82,14 +84,15 @@ router.get('/medicineList', [passport.authenticate('jwt', { session: false }), i
 // });
 
 router.get('/reasonForVisit', [passport.authenticate('jwt', { session: false }), isDoctor], (req, res, next) => {
-    Visit.findOne({ Visit: req.reasonForVisit }), (err, reasonForVisit) =>  {
-    if (err)
-        res.send({ success: false, msg: err }).status(404);
-    if (reasonForVisit)
-        res.send({ success: true, 'Visit': reasonForVisit }).status(201);
-    else
-        res.send({ success: false, msg: 'Something happened' }).status(404);
+    Visit.findOne({ 'patient': '5c39d16a6debdf11bcf59be1'}, (err, reasonForVisit) =>  { // hard coded patient here 
+    if (err) {
+        console.log(err);
     }
+    if (reasonForVisit) {
+        console.log(reasonForVisit);
+        res.send({ success: true, 'Visit': reasonForVisit }).status(201);
+    }
+    })
 
 });
 
@@ -97,8 +100,34 @@ router.post('/add/reasonForVisit', [passport.authenticate('jwt', { session: fals
         let reasonForVisit = new Visit({
             reasonForVisit: req.body.reasonForVisit
         })
-            reasonForVisit.save(); 
-          console.log("here:" + req.body.reasonForVisit); 
+        console.log();
+    patient.find({ '_id': '5c39d16a6debdf11bcf59be1'}, (err,patientd) =>{ // hard coded patient here 
+            if (err)
+                console.log(error);
+            if (patient) {
+                console.log(patientd);
+                patientd._id = '5c39d16a6debdf11bcf59be1';// hard coded patient here 
+                console.log(patientd._id);
+                console.log(req.body.reasonForVisit);
+                Visit.create({ patient: patientd._id, reasonForVisit: req.body.reasonForVisit }, (err, patientd) => { // hard coded patient here 
+                    if (err)
+                        console.log(error);
+                    else{
+                        console.log ("Success");
+                        console.log(patientd);
+                    }
+                });
+                // Visit.patient.push(patientd._id);
+                // Visit.reasonForVisit.push(req.body.reasonForVisit);
+                // // Visit.save();
+                // Visit.save(function (err) {
+                //     if (err)
+                //         res.send(err);
+                //     res.json({ message: "Ok" });
+                // });
+            }
+        });
+            
           return res.json({ success: true, msg: "Reason for Visit successfully added" })
         
 
