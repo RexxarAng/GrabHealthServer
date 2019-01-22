@@ -43,12 +43,19 @@ const DispenseMedicineSchema = mongoose.Schema({
         type: Number,
         required: true
     },
+    
+    reasonForVisit: {
+        type: String,
+        required: true
+    },
 
     unitPrice: { 
         type: Schema.Types.Double,
         required: true
-    }
+    } 
+
+    
 
 });
 
-const Medicine = module.exports = mongoose.model('DispenseMedicine', DispenseMedicineSchema);
+const DispenseMedicine = module.exports = mongoose.model('DispenseMedicine', DispenseMedicineSchema);
