@@ -170,7 +170,7 @@ router.post('/createPatient', [passport.authenticate('jwt', {session:false}), is
         email: req.body.email
     });
 
-    axios.post('http://localhost:4000/GrabHealthWeb/registerWalkInPatient', {                       
+    axios.post(webserverurl + '/GrabHealthWeb/registerWalkInPatient', {                       
         firstName: req.body.firstName,
         lastName: req.body.lastName,
         nric: req.body.nric,
@@ -337,7 +337,7 @@ router.post('/createPayment', [passport.authenticate('jwt', {session:false}), is
 
 // Add patient to queue
 router.post('/addPatientToQueue', [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
-    console.log(req);
+    console.log(req.body);
     req.body.clinic = req.user.clinic;
 
     axios.post(webserverurl + '/GrabHealthWeb/addPatientToQueue', {                       
@@ -390,45 +390,44 @@ router.post('/addPatientToQueue', [passport.authenticate('jwt', {session:false})
 
 
 // Display patients in queue <stopped here>
-router.get("/queue-list", [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
-    console.log(res);
-    req.body.clinic = req.body.clinic;
+// router.get("/queue-list", [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
+//     console.log(res);
+//     req.body.clinic = req.body.clinic;
     
-    axios.get('http://localhost:4000/GrabHealthWeb/addPatientToQueue', {
-        params: {
-        firstName: req.body.firstName,
-        lastName: req.body.lastName,
-        nric: req.body.nric,
-        contactNo: req.body.contactNo,
-        address: req.body.address,
-        dob: req.body.dob,
-        nationality: req.body.nationality,
-        gender: req.body.gender,
-        email: req.body.email,
-        clinic: req.user.clinic,
-        queueNo: req.body.queueNo
-        }
-    }
-    .then((res1) => {
-        data = res1['data'];
-        console.log(data);
-        if(data['success']) {
-            Patient.findOne({nric: req.body.nric})
-            .populate({ select: 'firstName lastName nric email contactNo address dob nationality queueNo' })
-            .exec(function (err, queuelist) {
-                res.send({ 'queueList': queuelist }).status(201);
-            })
-        } else{
-            return res.json({success: false, msg: data['msg']});
-        }
-    })                                                                                                                                                                                                                                                                           
-    .catch((error) => {
-        console.log(error);
-        return res.json({success: false, msg: "Some error has occurred"});
-    })
-    )
+//     axios.get(webserverurl + '/GrabHealthWeb/addPatientToQueue', {
+//         firstName: req.body.firstName,
+//         lastName: req.body.lastName,
+//         nric: req.body.nric,
+//         contactNo: req.body.contactNo,
+//         address: req.body.address,
+//         dob: req.body.dob,
+//         nationality: req.body.nationality,
+//         gender: req.body.gender,
+//         email: req.body.email,
+//         clinic: req.user.clinic,
+//         queueNo: req.body.queueNo
+        
+//     }
+//     .then((res1) => {
+//         data = res1['data'];
+//         console.log(data);
+//         if(data['success']) {
+//             Patient.findOne({nric: req.body.nric})
+//             .populate({ select: 'firstName lastName nric email contactNo address dob nationality queueNo' })
+//             .exec(function (err, queuelist) {
+//                 res.send({ 'queueList': queuelist }).status(201);
+//             })
+//         } else{
+//             return res.json({success: false, msg: data['msg']});
+//         }
+//     })                                                                                                                                                                                                                                                                           
+//     .catch((error) => {
+//         console.log(error);
+//         return res.json({success: false, msg: "Some error has occurred"});
+//     })
+//     )
 
-});
+// });
 
 
 // Display patients in queue
@@ -445,7 +444,25 @@ router.get("/queue-list", [passport.authenticate('jwt', {session:false}), isRece
 
 
 
-// View pending approval list <use axios.get>
+//View pending approval list
+router.get("/pendingList", [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
+    axios.post(webserverurl + '/GrabHealthWeb/pendingList',{
+        clinic: req.user.clinic
+    })
+    .then((res1) => {
+        data = res1['data'];
+        if(data['success']) {
+           return res.json({success: true, pendingList: data['pendingList']});
+        } else{
+            return res.json({success: false, msg: data['msg']});
+        }
+    })                                                                                                                                                                                                                                                                           
+    .catch((error) => {
+        console.log(error);
+        return res.json({success: false, msg: "Some error has occurred"});
+    })
+    
+});
 
 
 // Accept appointment request <use axios.post>
