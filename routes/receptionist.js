@@ -11,8 +11,8 @@ const axios = require('axios');
 const Patient = require('../models/patient');
 const env_config = require('dotenv').config(); 
 
-if(process.env.webserverurl){
-    var webserverurl = process.env.webserverurl
+if(process.env.WEBSERVERURL){
+    var webserverurl = process.env.WEBSERVERURL;
 } else {
     var webserverurl =  'http://localhost:4000';
 }
