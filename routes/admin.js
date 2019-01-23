@@ -392,4 +392,25 @@ router.post("/clinic/remove", [passport.authenticate('jwt', {session:false}), is
     });
 });
 
+
+router.get("/patientList", [passport.authenticate('jwt', {session:false}), isAdmin, isNotBlackListedToken], (req, res, next) => {
+    axios.post(webserverurl + '/GrabHealthWeb/getAllPatients',{})
+    .then((webRes) => {
+        data = webRes['data'];
+        if(data['success']) {
+           return res.json({success: true, patients: data['patients']});
+        } else{
+            return res.json({success: false, msg: data['msg']});
+        }
+    })                                                                                                                                                                                                                                                                           
+    .catch((error) => {
+        return res.json({success: false, msg: "Some error has occurred"});
+    })
+});
+
+router.post("/patient/remove", [passport.authenticate('jwt', {session:false}), isAdmin, isNotBlackListedToken], (req, res, next) => {
+});
+
+
+
 module.exports = router;
