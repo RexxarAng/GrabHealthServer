@@ -392,61 +392,6 @@ router.post('/removePatientFromQueue', [passport.authenticate('jwt', {session:fa
 });
 
 
-
-// Display patients in queue <stopped here>
-// router.get("/queue-list", [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
-//     console.log(res);
-//     req.body.clinic = req.body.clinic;
-    
-//     axios.get(webserverurl + '/GrabHealthWeb/addPatientToQueue', {
-//         firstName: req.body.firstName,
-//         lastName: req.body.lastName,
-//         nric: req.body.nric,
-//         contactNo: req.body.contactNo,
-//         address: req.body.address,
-//         dob: req.body.dob,
-//         nationality: req.body.nationality,
-//         gender: req.body.gender,
-//         email: req.body.email,
-//         clinic: req.user.clinic,
-//         queueNo: req.body.queueNo
-        
-//     }
-//     .then((res1) => {
-//         data = res1['data'];
-//         console.log(data);
-//         if(data['success']) {
-//             Patient.findOne({nric: req.body.nric})
-//             .populate({ select: 'firstName lastName nric email contactNo address dob nationality queueNo' })
-//             .exec(function (err, queuelist) {
-//                 res.send({ 'queueList': queuelist }).status(201);
-//             })
-//         } else{
-//             return res.json({success: false, msg: data['msg']});
-//         }
-//     })                                                                                                                                                                                                                                                                           
-//     .catch((error) => {
-//         console.log(error);
-//         return res.json({success: false, msg: "Some error has occurred"});
-//     })
-//     )
-
-// });
-
-
-// Display patients in queue
-/*router.get("/queue-list", [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
-    Queue.find({"clinic": req.user.clinic}).sort({"firstName":1}).limit().exec(function(err,patients) {
-        if(err)
-            res.send({success: false, msg: err}).status(404);
-        if(patients)
-            res.send({success: true, 'patients': patients}).status(201);
-        else
-            res.send({success: false, msg: 'Something happened'}).status(404);
-    });
-});*/
-
-
 //Get queue list
 router.get("/queueList", [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
     console.log(req.body);
@@ -490,7 +435,38 @@ router.get("/pendingList", [passport.authenticate('jwt', {session:false}), isRec
 });
 
 
-// Accept appointment request <use axios.post>
+// Accept appointment request
+router.post('/acceptAppointmentRequest', [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
+    console.log(req.body);
+    req.body.clinic = req.user.clinic;
+
+    axios.post(webserverurl + '/GrabHealthWeb/acceptAppointmentRequest', {                       
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+        nric: req.body.nric,
+        contactNo: req.body.contactNo,
+        address: req.body.address,
+        dob: req.body.dob,
+        nationality: req.body.nationality,
+        gender: req.body.gender,
+        email: req.body.email,
+        clinic: req.user.clinic
+    })
+    .then((res1) => {
+        data = res1['data'];
+        console.log(data);
+        if(data['success']) {
+            return res.json({success: true, msg: 'Patient successfully added to queue!'});
+        } else {
+            return res.json({success: false, msg: 'Patient cannot be added to queue!'});
+        }
+    })                                                                                                                                                                                                                                                                           
+    .catch((error) => {
+        console.log(error);
+        return res.json({success: false, msg: "Some error has occurred"});
+    });
+});
+
 
 
 // Reject appointment request <use axios.post>
