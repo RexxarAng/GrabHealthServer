@@ -356,27 +356,30 @@ router.post('/addPatientToQueue', [passport.authenticate('jwt', {session:false})
         data = res1['data'];
         console.log(data);
         if(data['success']) {
-            Patient.findOne({nric: req.body.nric}, (err, patient) => {
-                if(err){
-                    console.log(err);
-                    return res.json({success: false, msg: "Error"});
-                }
-                if(patient){
-                    patient.clinic.push(req.user.clinic);
-                    patient.save(function(err2, addToQueue){
-                        if(err2){
-                            return res.json({success: false, msg: err2});
-                        } else {
-                            if(addToQueue)
-                                return res.json({success: true, msg: 'Patient successfully added to queue!'});
-                            else 
-                                return res.json({success: false, msg: 'Patient cannot be added to queue!'});
-                        }
-                    });          
-                } else {
-                    return res.json({success: false, msg: 'Patient cannot be added to queue!'});
-                }
-            });
+            return res.json({success: true, msg: 'Patient successfully added to queue!'});
+        } else {
+            return res.json({success: false, msg: 'Patient cannot be added to queue!'});
+        }
+    })                                                                                                                                                                                                                                                                           
+    .catch((error) => {
+        console.log(error);
+        return res.json({success: false, msg: "Some error has occurred"});
+    });
+});
+
+
+// Remove patient from queue
+router.post('/removePatientFromQueue', [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
+    console.log(req.body);
+    axios.post(webserverurl + '/GrabHealthWeb/removePatientFromQueue', {
+        nric: req.body.nric,
+        clinic: req.user.clinic
+    })
+    .then((res1) => {
+        data = res1['data'];
+        console.log(data);
+        if(data['success']) {
+           return res.json({success: true, msg: data['msg']});
         } else{
             return res.json({success: false, msg: data['msg']});
         }
@@ -387,6 +390,7 @@ router.post('/addPatientToQueue', [passport.authenticate('jwt', {session:false})
     });
   
 });
+
 
 
 // Display patients in queue <stopped here>
@@ -443,8 +447,29 @@ router.post('/addPatientToQueue', [passport.authenticate('jwt', {session:false})
 });*/
 
 
+//Get queue list
+router.get("/queueList", [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
+    console.log(req.body);
+    axios.post(webserverurl + '/GrabHealthWeb/queueList',{
+        clinic: req.user.clinic
+    })
+    .then((res1) => {
+        data = res1['data'];
+        if(data['success']) {
+           return res.json({success: true, queueList: data['queueList']});
+        } else{
+            return res.json({success: false, msg: data['msg']});
+        }
+    })                                                                                                                                                                                                                                                                           
+    .catch((error) => {
+        console.log(error);
+        return res.json({success: false, msg: "Some error has occurred"});
+    })
+    
+});
 
-//View pending approval list
+
+//Get pending approval list
 router.get("/pendingList", [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
     axios.post(webserverurl + '/GrabHealthWeb/pendingList',{
         clinic: req.user.clinic
