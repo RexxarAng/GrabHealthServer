@@ -4,7 +4,7 @@ const Manager = require("../models/manager");
 const Clinic = require("../models/clinic");
 const Doctor = require("../models/doctor");
 const Receptionist = require("../models/receptionist");
-const dispensemedicine = require("../models/dispensemedicine");
+const medicine = require("../models/medicine");
 const passport = require('passport');
 const multer = require('multer'); 
 var DIR = './uploads';
@@ -84,14 +84,27 @@ router.get('/medicineList', [passport.authenticate('jwt', { session: false }), i
 // });
 
 router.get('/reasonForVisit', [passport.authenticate('jwt', { session: false }), isDoctor], (req, res, next) => {
-    Visit.findOne({ 'patient': '5c39d16a6debdf11bcf59be1'}, (err, reasonForVisit) =>  { // hard coded patient here 
+    Visit.findOne({ 'patient': '5c39d4c36debdf11bcf59be3'}, (err, reasonForVisit) =>  { // hard coded patient here 
     if (err) {
         console.log(err);
     }
     if (reasonForVisit) {
         console.log(reasonForVisit);
-        res.send({ success: true, 'Visit': reasonForVisit }).status(201);
+        res.send({ success: true, 'reasonForVisit': reasonForVisit }).status(201);
     }
+    })
+
+});
+
+router.get('/reasonForVisit', [passport.authenticate('jwt', { session: false }), isDoctor], (req, res, next) => {
+    Visit.findOne({ 'patient': '5c39d4c36debdf11bcf59be3' }, (err, reasonForVisit) => { // hard coded patient here 
+        if (err) {
+            console.log(err);
+        }
+        if (reasonForVisit) {
+            console.log(reasonForVisit);
+            res.send({ success: true, 'reasonForVisit': reasonForVisit }).status(201);
+        }
     })
 
 });
@@ -101,30 +114,22 @@ router.post('/add/reasonForVisit', [passport.authenticate('jwt', { session: fals
             reasonForVisit: req.body.reasonForVisit
         })
         console.log();
-    patient.find({ '_id': '5c39d16a6debdf11bcf59be1'}, (err,patientd) =>{ // hard coded patient here 
+    patient.find({ '_id': '5c39d4c36debdf11bcf59be3', }, (err,patientd) =>{ // hard coded patient here 
             if (err)
                 console.log(error);
             if (patient) {
-                console.log(patientd);
-                patientd._id = '5c39d16a6debdf11bcf59be1';// hard coded patient here 
+                patientd._id = '5c39d4c36debdf11bcf59be3';// hard coded patient here 
                 console.log(patientd._id);
                 console.log(req.body.reasonForVisit);
                 Visit.create({ patient: patientd._id, reasonForVisit: req.body.reasonForVisit }, (err, patientd) => { // hard coded patient here 
                     if (err)
-                        console.log(error);
+                        console.log(err);
                     else{
                         console.log ("Success");
                         console.log(patientd);
                     }
                 });
-                // Visit.patient.push(patientd._id);
-                // Visit.reasonForVisit.push(req.body.reasonForVisit);
-                // // Visit.save();
-                // Visit.save(function (err) {
-                //     if (err)
-                //         res.send(err);
-                //     res.json({ message: "Ok" });
-                // });
+   
             }
         });
             
@@ -132,6 +137,36 @@ router.post('/add/reasonForVisit', [passport.authenticate('jwt', { session: fals
         
 
         })
+
+router.post('/add/medicine', [passport.authenticate('jwt', { session: false }), isDoctor], (req, res, next) => {
+    let selectedMedicine = new Visit({
+        selectedMedicine: req.body.selectedMedicine
+    })
+
+    MedicineList.findOne({ 'list': req.body.list })
+        .populate({ path: 'list', select: 'name category price effects' })
+        .exec(function (err, selectedMedicine) {
+            res.send({ 'selectedMedicine': selectedMedicine }).status(201);
+            console.log("TESTING " + req.body.selectedMedicine);
+
+        })
+   
+  //  return res.json({ success: true, msg: "Selected medicine is successfully added" })
+
+});     
+
+router.get('/medicine', [passport.authenticate('jwt', { session: false }), isDoctor], (req, res, next) => {
+    Visit.findOne({ 'patient': '5c39d4c36debdf11bcf59be3' }, (err, selectedMedicine) => { // hard coded patient here 
+        if (err) {
+            console.log(err);
+        }
+        if (medicine) {
+            console.log("Medicine: " + selectedMedicine);
+            res.send({ success: true, 'medicine': selectedMedicine }).status(201);
+        }
+    })
+
+});
 
 
 module.exports = router;
