@@ -24,8 +24,8 @@ algorithm = 'aes-256-gcm';
 secretKey = 'D87314A83ABFB2312CF8F5386F62A6VS';
 // do not use a global iv for production, 
 // generate a new one for each encryption
-if(process.env.webserverurl){
-    var webserverurl = process.env.webserverurl;
+if(process.env.WEBSERVERURL){
+    var webserverurl = process.env.WEBSERVERURL;
 } else {
     var webserverurl =  'http://localhost:4000';
 }
@@ -391,5 +391,26 @@ router.post("/clinic/remove", [passport.authenticate('jwt', {session:false}), is
         }
     });
 });
+
+
+router.get("/patientList", [passport.authenticate('jwt', {session:false}), isAdmin, isNotBlackListedToken], (req, res, next) => {
+    axios.post(webserverurl + '/GrabHealthWeb/getAllPatients',{})
+    .then((webRes) => {
+        data = webRes['data'];
+        if(data['success']) {
+           return res.json({success: true, patients: data['patients']});
+        } else{
+            return res.json({success: false, msg: data['msg']});
+        }
+    })                                                                                                                                                                                                                                                                           
+    .catch((error) => {
+        return res.json({success: false, msg: "Some error has occurred"});
+    })
+});
+
+router.post("/patient/remove", [passport.authenticate('jwt', {session:false}), isAdmin, isNotBlackListedToken], (req, res, next) => {
+});
+
+
 
 module.exports = router;
