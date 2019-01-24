@@ -4,9 +4,11 @@ const config = require("../config/database");
 const uniqueValidator = require('mongoose-unique-validator');
 const Validator = require('../validation/validation');
 
-const Schema = mongoose.Schema;
-
 const PatientSchema = mongoose.Schema({
+    _id: {
+        type: mongoose.Schema.Types.ObjectId,
+        auto: false
+    },
     firstName: {
         type: String,
         required: true
