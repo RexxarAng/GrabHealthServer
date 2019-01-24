@@ -16,6 +16,7 @@ const admin = require("./routes/admin");
 const bodyCleaner = require('express-body-cleaner');
 const env_config = require('dotenv').config(); 
 var fs = require('fs');
+const patient = require("./routes/patient");
 
 mongoose.connect(config.database, {useNewUrlParser: true, useCreateIndex: true });
 mongoose.Promise = global.Promise;
@@ -53,6 +54,9 @@ app.use('/receptionist', receptionist);
 
 //Admin route
 app.use('/admin', admin);
+
+//Patient route
+app.use('/patient', patient);
 
 //Passport Middleware
 app.use(passport.initialize());
