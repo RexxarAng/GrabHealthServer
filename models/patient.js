@@ -5,10 +5,10 @@ const uniqueValidator = require('mongoose-unique-validator');
 const Validator = require('../validation/validation');
 
 const PatientSchema = mongoose.Schema({
-    _id: {
-        type: mongoose.Schema.Types.ObjectId,
-        auto: false
-    },
+    // _id: {
+    //     type: mongoose.Schema.Types.ObjectId,
+    //     auto: false
+    // },
     firstName: {
         type: String,
         required: true

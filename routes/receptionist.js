@@ -436,6 +436,7 @@ router.get("/queueList", [passport.authenticate('jwt', {session:false}), isRecep
     })
     .then((res1) => {
         data = res1['data'];
+        console.log(data);
         if(data['success']) {
            return res.json({success: true, queueList: data['queueList']});
         } else{
@@ -504,7 +505,30 @@ router.post('/acceptAppointmentRequest', [passport.authenticate('jwt', {session:
 });
 
 
+// Reject appointment request
+router.post('/rejectAppointmentRequest', [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
+    console.log(req.body);
+    axios.post(webserverurl + '/GrabHealthWeb/rejectAppointmentRequest', {
+        nric: req.body.nric,
+        clinic: req.user.clinic
+    })
+    .then((res1) => {
+        data = res1['data'];
+        console.log(data);
+        if(data['success']) {
+            return res.json({success: true, msg: data['msg']});
+        } else{
+            return res.json({success: false, msg: data['msg']});
+        }
+    })                                                                                                                                                                                                                                                                           
+    .catch((error) => {
+        console.log(error);
+        return res.json({success: false, msg: "Some error has occurred"});
+    });
+    
+});
 
-// Reject appointment request <use axios.post>
+
+
 
 module.exports = router;
