@@ -283,7 +283,6 @@ router.post('/clinic/register', [passport.authenticate('jwt', {session:false}), 
                 address: req.body.clinic.address,
                 location: req.body.clinic.location,
                 contactNo: req.body.clinic.contactNo,
-                clinicPhoto: req.body.clinic.clinicPhoto,
                 clinicLicenseNo: req.body.clinic.clinicLicenseNo,
                 clinicManager: managerId
             });
@@ -316,7 +315,6 @@ router.post('/clinic/register', [passport.authenticate('jwt', {session:false}), 
                             address: req.body.clinic.address,
                             location: req.body.clinic.location,
                             contactNo: req.body.clinic.contactNo,
-                            clinicPhoto: req.body.clinic.clinicPhoto,
                             clinicLicenseNo: req.body.clinic.clinicLicenseNo
                         })
                         .then((res) => {
@@ -358,6 +356,7 @@ router.get("/clinicList", [passport.authenticate('jwt', {session:false}), isAdmi
 });
 
 router.post("/clinic/remove", [passport.authenticate('jwt', {session:false}), isAdmin, isNotBlackListedToken], (req, res, next) => {
+    console.log(req.body);
     Clinic.findOne({clinicLicenseNo: req.body.clinicLicenseNo}, (err, clinic) => {
         if(err){
             return res.json({success: false, msg: 'Clinic doesnt exist'});
