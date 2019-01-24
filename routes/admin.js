@@ -358,6 +358,7 @@ router.get("/clinicList", [passport.authenticate('jwt', {session:false}), isAdmi
 });
 
 router.post("/clinic/remove", [passport.authenticate('jwt', {session:false}), isAdmin, isNotBlackListedToken], (req, res, next) => {
+    console.log(req.body);
     Clinic.findOne({clinicLicenseNo: req.body.clinicLicenseNo}, (err, clinic) => {
         if(err){
             return res.json({success: false, msg: 'Clinic doesnt exist'});
