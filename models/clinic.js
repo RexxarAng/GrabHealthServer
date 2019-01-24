@@ -32,10 +32,6 @@ const ClinicSchema = mongoose.Schema({
         required: true,
         unique: true
     },
-    clinicPhoto: {
-        type: String,
-        required: true
-    },
     clinicManager: {
         type: Schema.Types.ObjectId,
         ref: 'Manager',
