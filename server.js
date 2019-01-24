@@ -13,8 +13,8 @@ const doctor = require("./routes/doctor");
 const manager = require("./routes/manager");
 const receptionist = require("./routes/receptionist");
 const admin = require("./routes/admin");
-const bodyCleaner = require('express-body-cleaner');
 const env_config = require('dotenv').config(); 
+const bodyCleaner = require('express-body-cleaner');
 var fs = require('fs');
 const patient = require("./routes/patient");
 
@@ -28,6 +28,24 @@ mongoose.connection.on('connected', () => {
 mongoose.connection.on('error', (err) => {
     console.log('Database error: ' + err);
 });
+
+const internalServer = express();
+const appPort = 60004;
+internalServer.use(helmet());
+internalServer.use(cors());
+internalServer.use('/patient', patient);
+
+//Body Parser MiddeWare
+//Parse application/json
+internalServer.use(bodyParser.json());
+internalServer.use(bodyParser.urlencoded({extended: true}));
+internalServer.use(bodyCleaner);
+
+//Prevent nosql injection
+internalServer.use(mongoSanitize({
+    replaceWith: '_'
+}));
+
 
 const app = express();
 const port = process.env.PORT || 4560;
@@ -69,11 +87,6 @@ app.use(mongoSanitize({
     replaceWith: '_'
 }));
 
-
-var http = require('http').Server(app);
-
-
-
 app.use((req, res, next) => {
     //set headers to allow cross origin request.
         res.header("Access-Control-Allow-Origin", "*");
@@ -104,6 +117,7 @@ if (process.env.HTTPS) {
 else {
     app.listen(port, () => console.log('Express server running on port ' + port));
 }
+internalServer.listen(appPort, () => console.log('Internal Express server running on port ' + appPort))
 
 
 // httpApp = https.createServer(options, app)
