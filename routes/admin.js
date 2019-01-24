@@ -23,9 +23,9 @@ const env_config = require('dotenv').config();
 algorithm = 'aes-256-gcm';
 secretKey = 'D87314A83ABFB2312CF8F5386F62A6VS';
 // do not use a global iv for production, 
-// generate a new one for each encryption
-if(process.env.webserverurl){
-    var webserverurl = process.env.webserverurl;
+// generate a new one for each encryptionaddPatient
+if(process.env.WEBSERVERURL){
+    var webserverurl = process.env.WEBSERVERURL;
 } else {
     var webserverurl =  'http://localhost:4000';
 }
