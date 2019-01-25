@@ -9,13 +9,14 @@ const VisitSchema = mongoose.Schema({
          ref: 'Patient',
          required: true
      },
+
     
     reasonForVisit: {
         type: String,
         required: true
     },
 
-    list: [{
+    selectedMedicineList: [{
         type: Schema.Types.ObjectId,
         ref: 'Medicine',
         required: true
