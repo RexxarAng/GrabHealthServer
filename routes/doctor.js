@@ -6,11 +6,11 @@ const Doctor = require("../models/doctor");
 const Receptionist = require("../models/receptionist");
 const Medicine = require("../models/medicine");
 const passport = require('passport');
-const multer = require('multer'); 
+const multer = require('multer');
 var DIR = './uploads';
 var upload = multer({ dest: DIR }).single('photo');
 //var watermark = require('image-watermark');
-var watertext = require('watertext'); 
+var watertext = require('watertext');
 const MedicineList = require('../models/medicinelist');
 const Visit = require('../models/visit');
 const Patient = require('../models/patient');
@@ -37,39 +37,39 @@ var storage = multer.diskStorage({
         cb(null, './uploads/')
     },
     filename: function (req, file, cb) {
-        cb(null, Date.now() + '.jpg') 
+        cb(null, Date.now() + '.jpg')
     }
 })
-var photoUpload = multer({storage: storage}).single('photo')
+var photoUpload = multer({ storage: storage }).single('photo')
 
 
 // file uploading
-    router.get('/', function (req, res, next) {
-        // render the index page, and pass data to it.
-        res.render('index', { title: 'Express' });
+router.get('/', function (req, res, next) {
+    // render the index page, and pass data to it.
+    res.render('index', { title: 'Express' });
+});
+
+
+router.post('/registration', photoUpload, function (req, res, next) {
+    var path = '';
+    upload(req, res, function (err) {
+        if (err) {
+            // An error occurred when uploading
+            console.log(err);
+            return res.status(422).send("Error occurred")
+        }
+        // No error occured.
+
+        //watermark.embedWatermark(fpath, { 'text': 'sample watermark' });
+
+        path = req.file.path;
+        // watertext(path, { text: 'Awesome cat' })
+        // .then(function (url) { path = url; });
+        //  console.log("Watermarked!~~~")
+        // console.log("file path" + fpath.extname(path));
+        return res.send("Upload Completed");
     });
-
-
-    router.post('/registration', photoUpload, function (req, res, next) {
-        var path = '';
-        upload(req, res, function (err) {
-            if (err) {
-                // An error occurred when uploading
-                console.log(err);
-                return res.status(422).send("Error occurred")
-            }
-            // No error occured.
-
-           //watermark.embedWatermark(fpath, { 'text': 'sample watermark' });
-
-            path = req.file.path;
-           // watertext(path, { text: 'Awesome cat' })
-               // .then(function (url) { path = url; });
-          //  console.log("Watermarked!~~~")
-            // console.log("file path" + fpath.extname(path));
-            return res.send("Upload Completed");
-        });
-    })
+})
 
 router.get('/medicineList', [passport.authenticate('jwt', { session: false }), isDoctor], (req, res, next) => {
     MedicineList.findOne({ clinic: req.user.clinic })
@@ -110,44 +110,44 @@ router.post('/add/reasonForVisit', [passport.authenticate('jwt', { session: fals
     console.log(req.body);
 
     Patient.findOne({ nric: req.body.nric }).sort({ "firstName": 1 }).limit().exec(function (err, patient) {
-            if (err)
-                console.log(error);
-            if (patient) {
-                // patientd._id = '5c39d4c36debdf11bcf59be3';// hard coded patient here 
-                // console.log(patientd._id);
-                console.log("Reason for visit enters: " + req.body.reasonForVisit);
-                Visit.findOne({ patient: patient._id, completed: false, clinic: req.user._id}, (err2, visitFound) =>{
-                    if(err2)
-                        console.log(error);
-                    if(!visitFound){
-                        Visit.create({ patient: patient._id, reasonForVisit: req.body.reasonForVisit,queueNo: req.body.queueNo,clinic:req.user._id }, (err3, patientd) => { // hard coded patient here 
-                            if (err3)
-                                return res.json({ success: false, msg: err })
-                            else {
-                                console.log("Success");    
-                                return res.json({ success: true, msg: "Reason for Visit successfully added" })
+        if (err)
+            console.log(error);
+        if (patient) {
+            // patientd._id = '5c39d4c36debdf11bcf59be3';// hard coded patient here 
+            // console.log(patientd._id);
+            console.log("Reason for visit enters: " + req.body.reasonForVisit);
+            Visit.findOne({ patient: patient._id, completed: false, clinic: req.user._id }, (err2, visitFound) => {
+                if (err2)
+                    console.log(error);
+                if (!visitFound) {
+                    Visit.create({ patient: patient._id, reasonForVisit: req.body.reasonForVisit, queueNo: req.body.queueNo, clinic: req.user._id }, (err3, patientd) => { // hard coded patient here 
+                        if (err3)
+                            return res.json({ success: false, msg: err })
+                        else {
+                            console.log("Success");
+                            return res.json({ success: true, msg: "Patient's details successfully added" })
 
-                            }
-                        });
-                    }else {
-                        visitFound.reasonForVisit = req.body.reasonForVisit;
-                        visitFound.save(function(err4, visitSaved) {
-                            if(err4)
-                                console.log(err4)
-                            if(visitSaved)
-                                return res.json({ success: true, msg: "Visit successfully updated" })
-                            else
-                                return res.json({ success: false, msg: "Visit unable to be updated" })
+                        }
+                    });
+                } else {
+                    visitFound.reasonForVisit = req.body.reasonForVisit;
+                    visitFound.save(function (err4, visitSaved) {
+                        if (err4)
+                            console.log(err4)
+                        if (visitSaved)
+                            return res.json({ success: true, msg: "Visit successfully updated" })
+                        else
+                            return res.json({ success: false, msg: "Visit unable to be updated" })
 
-                        })
+                    })
 
-                    }
-                });
-   
-            }
-        });        
+                }
+            });
 
-    })
+        }
+    });
+
+})
 
 
 
@@ -243,10 +243,10 @@ router.post('/add/medicine', [passport.authenticate('jwt', { session: false }), 
                 if (err)
                     console.log(err);
                 if (medicine) {
-                    Visit.findOne({queueNo: req.body.queueNo, completed: false}, (err3, visit) =>{
-                        if(err3)
+                    Visit.findOne({ queueNo: req.body.queueNo, completed: false }, (err3, visit) => {
+                        if (err3)
                             return res.json({ success: false, msg: err3 });
-                        if(visit){
+                        if (visit) {
                             visit.medicineList.push(medicine._id);
                             visit.save(function (err, visitSaved) {
                                 if (err)
@@ -256,7 +256,7 @@ router.post('/add/medicine', [passport.authenticate('jwt', { session: false }), 
                                 }
                                 else
                                     return res.json({ success: false, msg: 'Visit cannot be updated' });
-                            });     
+                            });
                         }
                     })
                 } else {
@@ -272,12 +272,12 @@ router.post('/add/medicine', [passport.authenticate('jwt', { session: false }), 
 router.get("/medicine", [passport.authenticate('jwt', { session: false }), isDoctor], (req, res) => {
     MedicineList.findOne({ clinic: req.user.clinic })
         .populate({ path: 'list', select: 'name category price effects' })
-        .exec(function (err, selectedMedicineList ) {
+        .exec(function (err, selectedMedicineList) {
             res.send({ 'selectedMedicineList': selectedMedicineList }).status(201);
         })
 });
 
-  
+
 
 
 module.exports = router;
