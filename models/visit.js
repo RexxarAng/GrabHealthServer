@@ -9,18 +9,29 @@ const VisitSchema = mongoose.Schema({
          ref: 'Patient',
          required: true
      },
-
-    
+     completed:{
+         type: Boolean,
+         required: true,
+         default: false
+    },
     reasonForVisit: {
         type: String,
         required: true
     },
-
-    selectedMedicineList: [{
+    medicineList: [{
         type: Schema.Types.ObjectId,
         ref: 'Medicine',
+    }],
+    queueNo:{
+        type:Number,
         required: true
-    }]
+    },
+    clinic:{
+        type: Schema.Types.ObjectId,
+        ref: 'Clinic',
+        required: true
+    }
+
   
 
     

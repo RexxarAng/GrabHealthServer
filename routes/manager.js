@@ -298,6 +298,7 @@ router.post('/add/medicine', [passport.authenticate('jwt', { session: false }), 
                             return res.json({ success: false, msg: 'Medicine cannot be added' });
                         if (medicine) {
                             medicineList.list.push(medicine._id);
+                            console.log(true); 
                             medicineList.save();
                             return res.json({ success: true, msg: "Medicine successfully added" })
                         }

@@ -14,45 +14,11 @@ const DispenseMedicineSchema = mongoose.Schema({
         ref: 'Clinic'
     },
 
-    medicineName: {
-        type: String,
-        unique: true,
-        required: true
-    },
-    frequency: {
-        type: String, // e.g: 1/day
-        required: true
-
-    },
-    instructions:{ 
-        type: String,
-        required: true
-
-    },
-    dosage: {
-        type: String, // e.g: 325mg
-        required: true
-
-    },
-    usage: {
-        type: String, // e.g: for headache
-        required: true
-
-    },
-    mc: {
-        type: Number,
-        required: true
-    },
-    
-    reasonForVisit: {
-        type: String,
-        required: true
-    },
-
-    unitPrice: { 
-        type: Schema.Types.Double,
-        required: true
-    } 
+    list: [{
+        type: Schema.Types.ObjectId,
+        ref: 'MedicineList'
+    }]
+   
 
     
 
