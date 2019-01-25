@@ -7,54 +7,15 @@ const Validator = require('../validation/validation');
 const Schema = mongoose.Schema;
 
 const WalkInPatientSchema = mongoose.Schema({
-    firstName: {
-        type: String,
-        required: true
-    },
-    lastName: {
-        type: String,
-        required: true
-    },
-    nric: {
-        type: String,
-        required: true,
-        unique: true
-    },
-    password: {
-        type: String
-    },  
-    contactNo: {
-        type: Number,
-        required: true
-    },
-    address: {
-        type: String,
-        required: true
-    },
-    dob: {
-        type: String,
-        required: true
-    },
-    nationality: {
-        type: String,
-        required: true
-    },
-    gender:{
-        type: String,
-        required: true
-    },
-    email:{
-        type: String,
-        required: true
-    },
     clinic: {
         type: Schema.Types.ObjectId,
         ref: 'Clinic'
     },
-    // patients: [{
-    //     type: Schema.Types.ObjectId,
-    //     ref: 'Patient'
-    // }]
+    patient: {
+        type: Schema.Types.ObjectId,
+        ref: 'Patient',
+        unique: true
+    }
 
 });
 

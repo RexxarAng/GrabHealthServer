@@ -11,11 +11,14 @@ const axios = require('axios');
 const Patient = require('../models/patient');
 const env_config = require('dotenv').config(); 
 
+
 if(process.env.WEBSERVERURL){
     var webserverurl = process.env.WEBSERVERURL;
 } else {
     var webserverurl =  'http://localhost:4000';
 }
+
+
 isReceptionist = function(req, res, next){
     if(req.user.role == 'Receptionist') {
         next();
@@ -156,7 +159,7 @@ router.post('/createPatient', [passport.authenticate('jwt', {session:false}), is
     }
 
 
-    let newPatient = new WalkInPatient({
+    let newPatient = new Patient({
         firstName: req.body.firstName,
         lastName: req.body.lastName,
         nric: req.body.nric,
@@ -169,6 +172,7 @@ router.post('/createPatient', [passport.authenticate('jwt', {session:false}), is
         clinic: req.user.clinic,
         email: req.body.email
     });
+
 
     axios.post(webserverurl + '/GrabHealthWeb/registerWalkInPatient', {                       
         firstName: req.body.firstName,
@@ -184,29 +188,49 @@ router.post('/createPatient', [passport.authenticate('jwt', {session:false}), is
     .then((res1) => {
         data = res1['data'];
         if(data['success']) {
-            WalkInPatient.addUser(newPatient, (err, patient) => {
+            Patient.addUser(newPatient, (err, patient) => {
                 if(err){
                     console.log(err);
                     return res.json({success: false, msg: "Patient already exists"});
                 }
                 if(patient){
+                    console.log(patient);
                     patient.clinic = req.user.clinic;
-                    patient.save(function(err2, saveToDB){
-                        if(err2){
-                            return res.json({success: false, msg: err2});
-                        } else {
-                            if(saveToDB)
-                                return res.json({success: true, msg: 'Patient successfully created!'});
-                            else 
-                                return res.json({success: false, msg: 'Patient cannot be created!'});
+                    // patient.save(function(err2, saveToDB){
+                    // if(err2){
+                    //     return res.json({success: false, msg: err2});
+                    // } else {
+                    //     if(saveToDB)
+                    //         return res.json({success: true, msg: 'Walk-In Patient successfully created!'});
+                    //     else 
+                    //         return res.json({success: false, msg: 'Walk-In Patient cannot be created!'});
+                    // }
+                    // }); 
+
+                    WalkInPatient.findOne({patient: patient._id, clinic: req.user.clinic}, (err2, walkInPatient) => {
+                        if(err2)
+                            console.log(err2);
+                        if(!walkInPatient){
+                            let newWalkInPatient = new WalkInPatient({
+                                patient: patient._id,
+                                clinic: req.user.clinic
+                            })
+                            WalkInPatient.addUser(newWalkInPatient, (err3, savedWalkInPatient) =>{
+                                if(err3)
+                                    console.log(err3);
+                                if(savedWalkInPatient){
+                                    return res.json({success: true, msg: 'Walk-In Patient successfully created!'});
+                                }
+                                return res.json({success: false, msg: 'Walk-In Patient cannot be created!'});                                        
+                            })
                         }
-                    });          
+                    });
                 } else {
                     return res.json({success: false, msg: 'Walk-In Patient cannot be created!'});
                 }
             });
         } else{
-            return res.json({success: false, msg: data.errmsg});
+            return res.json({success: false, msg: data});
         }
     })
     .catch((error) => {
@@ -257,7 +281,7 @@ router.post('/editPatientInfo', [passport.authenticate('jwt', {session:false}), 
     .then((res1) => {
         data = res1['data'];
         if(data['success']) {
-            WalkInPatient.findOne({nric: req.body.nric, clinic: req.user.clinic}, (err, patient) => {
+            Patient.findOne({nric: req.body.nric}, (err, patient) => {
                 if(err){
                     res.json({success: false, msg: err});
                 }
@@ -277,6 +301,7 @@ router.post('/editPatientInfo', [passport.authenticate('jwt', {session:false}), 
                                 patient.contactNo = req.body.contactNo;
                                 patient.email = req.body.email;
                                 patient.save();
+                                
                                 return res.json({success: true, msg: "Patient details have been updated"});
                             } else 
                                 return res.json({success: false, msg: "No changes have been made"});
@@ -300,14 +325,25 @@ router.post('/editPatientInfo', [passport.authenticate('jwt', {session:false}), 
 
 // Display patient list
 router.get("/patient-list", [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
-    WalkInPatient.find({"clinic": req.user.clinic}).sort({"firstName":1}).limit().exec(function(err,patients) {
-        if(err)
-            res.send({success: false, msg: err}).status(404);
-        if(patients)
-            res.send({success: true, 'patients': patients}).status(201);
-        else
-            res.send({success: false, msg: 'Something happened'}).status(404);
-    });
+    // WalkInPatient.find({"clinic": req.user.clinic}).sort({"firstName":1}).limit().exec(function(err,patients) {
+        // if(err)
+        //     res.send({success: false, msg: err}).status(404);
+        // if(patients)
+        //     res.send({success: true, 'v': patients}).status(201);
+        // else
+        //     res.send({success: false, msg: 'Something happened'}).status(404);
+        
+    // });
+
+    WalkInPatient.find({ clinic: req.user.clinic })
+        .populate({ path: 'patient', select: '-password', options: { sort: { 'firstName': -1 } } })
+        .exec(function (err, patients) {
+            console.log(patients);
+            if(err)
+                return res.send({success: false, msg: err}).status(404);
+            return res.send({success: true, 'patients': patients }).status(201);
+        })
+        
 });
 
 
@@ -356,9 +392,9 @@ router.post('/addPatientToQueue', [passport.authenticate('jwt', {session:false})
         data = res1['data'];
         console.log(data);
         if(data['success']) {
-            return res.json({success: true, msg: 'Patient successfully added to queue!'});
+            return res.json({success: true, msg: 'Walk-In Patient successfully added to queue!'});
         } else {
-            return res.json({success: false, msg: 'Patient cannot be added to queue!'});
+            return res.json({success: false, msg: 'Walk-In Patient cannot be added to queue!'});
         }
     })                                                                                                                                                                                                                                                                           
     .catch((error) => {
@@ -400,6 +436,7 @@ router.get("/queueList", [passport.authenticate('jwt', {session:false}), isRecep
     })
     .then((res1) => {
         data = res1['data'];
+        console.log(data);
         if(data['success']) {
            return res.json({success: true, queueList: data['queueList']});
         } else{
@@ -458,7 +495,7 @@ router.post('/acceptAppointmentRequest', [passport.authenticate('jwt', {session:
         if(data['success']) {
             return res.json({success: true, msg: 'Patient successfully added to queue!'});
         } else {
-            return res.json({success: false, msg: 'Patient cannot be added to queue!'});
+            return res.json({success: false, msg: 'Patient has already been added to queue!'});
         }
     })                                                                                                                                                                                                                                                                           
     .catch((error) => {
@@ -468,7 +505,30 @@ router.post('/acceptAppointmentRequest', [passport.authenticate('jwt', {session:
 });
 
 
+// Reject appointment request
+router.post('/rejectAppointmentRequest', [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
+    console.log(req.body);
+    axios.post(webserverurl + '/GrabHealthWeb/rejectAppointmentRequest', {
+        nric: req.body.nric,
+        clinic: req.user.clinic
+    })
+    .then((res1) => {
+        data = res1['data'];
+        console.log(data);
+        if(data['success']) {
+            return res.json({success: true, msg: data['msg']});
+        } else{
+            return res.json({success: false, msg: data['msg']});
+        }
+    })                                                                                                                                                                                                                                                                           
+    .catch((error) => {
+        console.log(error);
+        return res.json({success: false, msg: "Some error has occurred"});
+    });
+    
+});
 
-// Reject appointment request <use axios.post>
+
+
 
 module.exports = router;
