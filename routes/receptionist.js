@@ -183,7 +183,8 @@ router.post('/createPatient', [passport.authenticate('jwt', {session:false}), is
         dob: req.body.dob,
         nationality: req.body.nationality,
         gender: req.body.gender,
-        email: req.body.email
+        email: req.body.email,
+        clinics: [req.user.clinic]
     })
     .then((res1) => {
         data = res1['data'];
@@ -219,6 +220,8 @@ router.post('/createPatient', [passport.authenticate('jwt', {session:false}), is
                                 if(err3)
                                     console.log(err3);
                                 if(savedWalkInPatient){
+                                    savedWalkInPatient.save();
+                                    console.log(savedWalkInPatient);
                                     return res.json({success: true, msg: 'Walk-In Patient successfully created!'});
                                 }
                                 return res.json({success: false, msg: 'Walk-In Patient cannot be created!'});                                        
@@ -323,7 +326,7 @@ router.post('/editPatientInfo', [passport.authenticate('jwt', {session:false}), 
 });
 
 
-// Display patient list
+// Display walk-in patient list
 router.get("/patient-list", [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
     // WalkInPatient.find({"clinic": req.user.clinic}).sort({"firstName":1}).limit().exec(function(err,patients) {
         // if(err)
@@ -345,30 +348,6 @@ router.get("/patient-list", [passport.authenticate('jwt', {session:false}), isRe
         })
         
 });
-
-
-// Create payment
-router.post('/createPayment', [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
-    if(!Validator.validateNric(req.body.patient)){
-        return res.json({success:false, msg: "Invalid IC number!"});
-    };
-    Patient.findOne({nric: req.body.patient}, (err, patient) => {
-        if(err){
-            res.json({success: false, msg:'Patient does not exist'});
-        }
-        if(patient){
-            let newPayment = new Payment({
-                clinic: req.user.clinic,
-                receiptNo: req.body.payment.receiptNo,
-                date: req.body.payment.date,
-                receiptNo: req.body.receiptNo,
-                patient: patient._id
-            })
-        }
-    })
-  
-});
-
 
 
 // Add patient to queue
@@ -487,7 +466,8 @@ router.post('/acceptAppointmentRequest', [passport.authenticate('jwt', {session:
         nationality: req.body.nationality,
         gender: req.body.gender,
         email: req.body.email,
-        clinic: req.user.clinic
+        clinic: req.user.clinic,
+        remarks: req.body.remarks
     })
     .then((res1) => {
         data = res1['data'];
@@ -527,6 +507,83 @@ router.post('/rejectAppointmentRequest', [passport.authenticate('jwt', {session:
     });
     
 });
+
+
+// Display all patients in clinic
+router.get("/all-patient-list", [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
+    axios.post(webserverurl + '/GrabHealthWeb/all-patient-list',{
+        clinic: req.user.clinic,
+        nric: req.body.nric
+    })
+    .then((res1) => {
+        data = res1['data'];
+        if(data['success']) {
+           return res.json({success: true, patientRecords: data['patientRecords']});
+        } else{
+            return res.json({success: false, msg: data['msg']});
+        }
+    })                                                                                                                                                                                                                                                                           
+    .catch((error) => {
+        console.log(error);
+        return res.json({success: false, msg: "Some error has occurred"});
+    })
+    
+});
+
+
+
+// // Complete Payment
+// router.get('/getPayment', [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
+//     if(!Validator.validateNric(req.body.patient)){
+//         return res.json({success:false, msg: "Invalid IC number!"});
+//     };
+
+//     axios.post(webserverurl + '/GrabHealthWeb/createPayment', {                       
+//         clinic: req.user.clinic,
+//         nric: req.body.nric,
+//     })
+//     .then((res1) => {
+//         data = res1['data'];
+//         if(data['success']) {
+//             Patient.findOne({nric: req.body.nric}, (err, patient) => {
+//                 if(err){
+//                     res.json({success: false, msg: err});
+//                 }
+//                 if(patient){
+//                     patient.save(function(err2, changesMade){
+//                         if(err2){
+//                                 return res.json({success: false, msg: err2});
+//                         } else {
+//                             if(changesMade){
+//                                 patient.firstName = req.body.firstName;
+//                                 patient.lastName = req.body.lastName;
+//                                 patient.nric = req.body.nric;
+//                                 patient.gender = req.body.gender;
+//                                 patient.address = req.body.address;
+//                                 patient.dob = req.body.dob;
+//                                 patient.nationality = req.body.nationality;
+//                                 patient.contactNo = req.body.contactNo;
+//                                 patient.email = req.body.email;
+//                                 patient.save();
+                                
+//                                 return res.json({success: true, msg: "Patient details have been updated"});
+//                             } else 
+//                                 return res.json({success: false, msg: "No changes have been made"});
+//                         }
+//                     });                   
+//                 } else {
+//                     return res.json({success: false, msg: "Unable to save changes successfully"});
+//                 }
+//             });
+//         } else{
+//             return res.json({success: false, msg: 'Patient details cannot be updated successfully!'});
+//         }
+//     })
+//     .catch((error) => {
+//         console.log(error);
+//         return res.json({success: false, msg: "Some error has occurred"});
+//     });
+//});
 
 
 
