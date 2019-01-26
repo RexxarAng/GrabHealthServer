@@ -544,9 +544,86 @@ router.get("/visits", [passport.authenticate('jwt', {session:false}), isReceptio
     });
 });
 
-// router.get("/create/payment", [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
+router.post("/create/payment", [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
+    console.log(req.body);
+    Visit.findOne({clinic: req.user.clinic, patient: req.body.patient._id, completed: false})
+    .populate({path: 'patient', select: '-password' })
+    .populate({path: 'medicineList'})
+    .populate({path: 'clinic', select: '-receptionists -doctors -manager'})
+    .populate({path: 'doctor', select: '-password'})
+    .exec(function (err, visit) {
+        if(err)
+            return res.json({success: false, msg:err});
+        if(visit){
+            Payment.findOne({visit: visit._id})
+            .populate({path: 'patient', select: '-password' })
+            .populate({path: 'visit', populate: 
+                [
+                    {
+                        path: 'doctor',
+                        model: 'Doctor',
+                        select: '-password'
+                },
+                    {
+                        path: 'medicineList',
+                        model: 'Medicine'
+                    }
+                ]
+            })
+            .populate({path: 'clinic', select: '-receptionists -doctors -manager'})
+            .exec(function (err2, paymentFound) {
+                if(err2)
+                    console.log(err2);
+                if(paymentFound){
+                    return res.json({success: true, payment: paymentFound});
+                } else {
+                    let subtotal = 0;
+                    visit.medicineList.forEach(medicine => {
+                        subtotal += parseFloat(medicine.price);
+                    });
+                    console.log(subtotal);
+                    subtotal += clinic.consultationFee;
+                    gst = subtotal * 0.07;
+                    total = subtotal + gst;
+                    let newPayment = new Payment({
+                        clinic: req.user.clinic,
+                        patient: req.body.patient._id,
+                        visit: visit._id,
+                        gst: gst,
+                        subtotal: subtotal,
+                        total: total
+                    });
+                    Payment.create(newPayment)
+                    .populate({path: 'patient', select: '-password' })
+                    .populate({path: 'visit', populate: 
+                        [
+                            {
+                                path: 'doctor',
+                                model: 'Doctor',
+                                select: '-password'
+                        },
+                            {
+                                path: 'medicineList',
+                                model: 'Medicine'
+                            }
+                        ]
+                    })
+                    .populate({path: 'clinic', select: '-receptionists -doctors -manager'})
+                    .exec(function (err3, payment) {
+                        if(err3)
+                            console.log('failed at err23');
+                        if(payment){
+                            return res.json({success: true, payment: payment});
+                        }
+                    });
+                }
+            });
 
-// });
+        } else {
+            return res.json({success: false, msg: 'Visit does not exist'});
+        }
+    });
+});
 
 
 // // Complete Payment
