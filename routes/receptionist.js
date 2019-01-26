@@ -183,7 +183,8 @@ router.post('/createPatient', [passport.authenticate('jwt', {session:false}), is
         dob: req.body.dob,
         nationality: req.body.nationality,
         gender: req.body.gender,
-        email: req.body.email
+        email: req.body.email,
+        clinics: [req.user.clinic]
     })
     .then((res1) => {
         data = res1['data'];
@@ -507,16 +508,26 @@ router.post('/rejectAppointmentRequest', [passport.authenticate('jwt', {session:
 });
 
 
-// // Display all patients in clinic
-// router.get("/all-patient-list", [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
-//     Patient.find({ clinic: req.user.clinic })
-//         .exec(function(err,patients){
-//             if(err)
-//                 return res.send({success: false, msg: err}).status(404);
-//             return res.send({success: true, 'patients': patients }).status(201);
-//         });
-        
-// });
+// Display all patients in clinic
+router.get("/all-patient-list", [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
+    axios.post(webserverurl + '/GrabHealthWeb/all-patient-list',{
+        clinic: req.user.clinic,
+        nric: req.body.nric
+    })
+    .then((res1) => {
+        data = res1['data'];
+        if(data['success']) {
+           return res.json({success: true, patientRecords: data['patientRecords']});
+        } else{
+            return res.json({success: false, msg: data['msg']});
+        }
+    })                                                                                                                                                                                                                                                                           
+    .catch((error) => {
+        console.log(error);
+        return res.json({success: false, msg: "Some error has occurred"});
+    })
+    
+});
 
 
 
@@ -571,24 +582,6 @@ router.post('/rejectAppointmentRequest', [passport.authenticate('jwt', {session:
 //         console.log(error);
 //         return res.json({success: false, msg: "Some error has occurred"});
 //     });
-
-
-
-    // Patient.findOne({nric: req.body.patient}, (err, patient) => {
-    //     if(err){
-    //         res.json({success: false, msg:'Patient does not exist'});
-    //     }
-    //     if(patient){
-    //         let newPayment = new Payment({
-    //             clinic: req.user.clinic,
-    //             receiptNo: req.body.payment.receiptNo,
-    //             date: req.body.payment.date,
-    //             receiptNo: req.body.receiptNo,
-    //             patient: patient._id
-    //         })
-    //     }
-    // })
-  
 //});
 
 
