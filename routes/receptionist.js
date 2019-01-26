@@ -466,7 +466,8 @@ router.post('/acceptAppointmentRequest', [passport.authenticate('jwt', {session:
         nationality: req.body.nationality,
         gender: req.body.gender,
         email: req.body.email,
-        clinic: req.user.clinic
+        clinic: req.user.clinic,
+        remarks: req.body.remarks
     })
     .then((res1) => {
         data = res1['data'];
