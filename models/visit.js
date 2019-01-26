@@ -4,15 +4,15 @@ require('mongoose-double')(mongoose);
 const Schema = mongoose.Schema;
 
 const VisitSchema = mongoose.Schema({
-     patient: {
-         type: Schema.Types.ObjectId,
-         ref: 'Patient',
-         required: true
-     },
-     completed:{
-         type: Boolean,
-         required: true,
-         default: false
+    patient: {
+        type: Schema.Types.ObjectId,
+        ref: 'Patient',
+        required: true
+    },
+    completed:{
+        type: Boolean,
+        required: true,
+        default: false
     },
     reasonForVisit: {
         type: String,

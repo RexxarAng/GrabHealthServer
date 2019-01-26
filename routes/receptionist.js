@@ -10,7 +10,7 @@ const Validator = require('../validation/validation');
 const axios = require('axios');
 const Patient = require('../models/patient');
 const env_config = require('dotenv').config(); 
-
+const Visit = require('../models/visit');
 
 if(process.env.WEBSERVERURL){
     var webserverurl = process.env.WEBSERVERURL;
@@ -530,6 +530,28 @@ router.get("/all-patient-list", [passport.authenticate('jwt', {session:false}), 
     
 });
 
+router.get("/visits", [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
+    Visit.find({clinic: req.user.clinic, completed: false}, (err, visits) => {
+        if(err)
+            return res.json({success: false, msg:err});
+        return res.json({success: true, visits: visits});
+    })
+    Visit.find({clinic: req.user.clinic, completed: false})
+    .populate({path: 'patient', select: '-password' })
+    .populate({path: 'medicineList'})
+    .populate({path: 'clinic'})
+    .exec(function (err, visits) {
+        if(err)
+            return res.json({success: false, msg:err});
+        return res.json({success: true, visits: visits});
+    });
+
+
+});
+
+router.get("/create/payment", [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
+    
+});
 
 
 // // Complete Payment

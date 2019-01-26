@@ -321,32 +321,54 @@ router.post("/create/visit", [passport.authenticate('jwt', { session: false }), 
         if(findpatientErr)
             return res.json({success: false, msg: findpatientErr});
         if(patient){
-            medicineList = [];
-            for(var medicine in req.body.medicineList){
-                Medicine.findOne({name: medicine.name}, (err, medicine) => {
-                    if(err)
-                        console.log(err)
-                    if(medicine)
-                        medicineList.push(medicine._id);
-                });
-            }
-            let visit = new Visit({
-                clinic: req.user.clinic,
-                patient: patient._id,
-                medicineList: medicineList,
-                queueNo: req.body.queueNo,
-                reasonForVisit: req.body.reasonForVisit
+            Visit.findOne({ patient: patient._id, completed: false, clinic: req.user.clinic }, (err2, visitFound) => {
+                if (err2)
+                console.log(error);
+                if (!visitFound) {
+                    medicineList = [];
+                    for(var medicine in req.body.medicineList){
+                        Medicine.findOne({name: medicine.name}, (err, medicine) => {
+                            if(err)
+                                console.log(err)
+                            if(medicine)
+                                medicineList.push(medicine._id);
+                        });
+                    }
+                    let visit = new Visit({
+                        clinic: req.user.clinic,
+                        patient: patient._id,
+                        medicineList: medicineList,
+                        queueNo: req.body.queueNo,
+                        reasonForVisit: req.body.reasonForVisit
+                    });
+                    Visit.create(visit, (err, visit) => {
+                        if (err) {
+                            return res.json({ success: false, msg: 'Please ensure that reason for visit is entered' });
+                        }
+                        if (visit) {
+                            axios.post(webserverurl + '/GrabHealthWeb/removeFromQueue', {
+                                nric: patient.nric,
+                                clinic: req.user.clinic
+                            })
+                            .then((res1) => {
+                                data = res1['data'];
+                                if (data['success']) {
+                                    return res.json({ success: true, msg: 'Visit successfully created' });
+                                } else {
+                                    return res.json({ success: false, msg: data['msg'] });
+                                }
+                            })
+                            .catch((error) => {
+                                console.log(error);
+                                return res.json({ success: false, msg: "Some error has occurred" });
+                            })
+        
+                        }
+                    })
+                } else {
+                    return res.json({ success: false, msg: "Visit already pending for payment" })
+                }
             });
-            Visit.create(visit, (err, visit) => {
-                if (err) {
-                    console.log(err);
-                    return res.json({ success: false, msg: 'Visit cannot be created' });
-                }
-                if (visit) {
-                    return res.json({ success: true, msg: 'Visit successfully created' });
-
-                }
-            })
         } else {
             return res.json({ success: false, msg: "Patient doesn't exist"});
         }
