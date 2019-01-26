@@ -323,23 +323,31 @@ router.post("/create/visit", [passport.authenticate('jwt', { session: false }), 
         if(patient){
             Visit.findOne({ patient: patient._id, completed: false, clinic: req.user.clinic }, (err2, visitFound) => {
                 if (err2)
-                console.log(error);
+                    console.log(error);
                 if (!visitFound) {
                     medicineList = [];
-                    for(var medicine in req.body.medicineList){
-                        Medicine.findOne({name: medicine.name}, (err, medicine) => {
+                    req.body.medicineList.forEach(medicine => {
+                        console.log(medicine.name);
+                        console.log(req.user.clinic);
+                        Medicine.findOne({name: medicine.name, clinic: req.user.clinic}, (err, medicineFound) => {
                             if(err)
                                 console.log(err)
-                            if(medicine)
-                                medicineList.push(medicine._id);
+                            if(medicineFound){
+                                medicineList.push(medicineFound._id);
+                                console.log(medicineFound);
+                            } else{
+                                console.log('Cant find the medicine');
+                            }
                         });
-                    }
+                    });
+                    console.log(medicineList);
                     let visit = new Visit({
                         clinic: req.user.clinic,
                         patient: patient._id,
                         medicineList: medicineList,
                         queueNo: req.body.queueNo,
-                        reasonForVisit: req.body.reasonForVisit
+                        reasonForVisit: req.body.reasonForVisit,
+                        doctor: req.user._id
                     });
                     Visit.create(visit, (err, visit) => {
                         if (err) {

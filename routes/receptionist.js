@@ -531,27 +531,22 @@ router.get("/all-patient-list", [passport.authenticate('jwt', {session:false}), 
 });
 
 router.get("/visits", [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
-    Visit.find({clinic: req.user.clinic, completed: false}, (err, visits) => {
-        if(err)
-            return res.json({success: false, msg:err});
-        return res.json({success: true, visits: visits});
-    })
     Visit.find({clinic: req.user.clinic, completed: false})
     .populate({path: 'patient', select: '-password' })
     .populate({path: 'medicineList'})
-    .populate({path: 'clinic'})
+    .populate({path: 'clinic', select: '-receptionists -doctors -manager'})
+    .populate({path: 'doctor', select: '-password'})
     .exec(function (err, visits) {
         if(err)
             return res.json({success: false, msg:err});
+        console.log(visits);
         return res.json({success: true, visits: visits});
     });
-
-
 });
 
-router.get("/create/payment", [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
-    
-});
+// router.get("/create/payment", [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
+
+// });
 
 
 // // Complete Payment

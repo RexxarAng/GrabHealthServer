@@ -26,6 +26,11 @@ const VisitSchema = mongoose.Schema({
         type:Number,
         required: true
     },
+    doctor:{
+        type: Schema.Types.ObjectId,
+        ref: 'Doctor',
+        required: true
+    },
     clinic:{
         type: Schema.Types.ObjectId,
         ref: 'Clinic',
