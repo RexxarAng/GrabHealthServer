@@ -19,6 +19,9 @@ const MedicineSchema = mongoose.Schema({
     clinic:{
         type: Schema.Types.ObjectId,
         ref: 'Clinic'
+    },
+    medicineInstructions: {
+        type: String
     }
 
 });

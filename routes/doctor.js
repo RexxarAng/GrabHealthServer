@@ -91,7 +91,7 @@ router.get('/medicineList', [passport.authenticate('jwt', { session: false }), i
 // });
 
 router.get('/reasonForVisit', [passport.authenticate('jwt', { session: false }), isDoctor], (req, res, next) => {
-    Visit.findOne({ patient: req.user.patient }, (err, reasonForVisit) => { // hard coded patient here 
+    Visit.findOne({ patient: req.user.patient }, (err, reasonForVisit) => { 
         if (err) {
             console.log(err);
         }
@@ -103,9 +103,27 @@ router.get('/reasonForVisit', [passport.authenticate('jwt', { session: false }),
 
 });
 
+router.get('/instructions', [passport.authenticate('jwt', { session: false }), isDoctor], (req, res, next) => {
+    Visit.findOne({ patient: req.user.patient }, (err, medicineInstructions) => { 
+        if (err) {
+            console.log(err);
+        }
+        if (medicineInstructions) {
+            console.log(medicineInstructions);
+            res.send({ success: true, 'medicineInstructions': medicineInstructions }).status(201);
+        }
+    })
+
+});
+
 router.post('/add/reasonForVisit', [passport.authenticate('jwt', { session: false }), isDoctor], (req, res, next) => {
     let reasonForVisit = new Visit({
         reasonForVisit: req.body.reasonForVisit
+    })
+
+    let medicineInstructions = new Medicine({
+
+        medicineInstructions: req.body.medicineInstructions
     })
     console.log(req.body);
 
@@ -113,9 +131,8 @@ router.post('/add/reasonForVisit', [passport.authenticate('jwt', { session: fals
         if (err)
             console.log(error);
         if (patient) {
-            // patientd._id = '5c39d4c36debdf11bcf59be3';// hard coded patient here 
-            // console.log(patientd._id);
             console.log("Reason for visit enters: " + req.body.reasonForVisit);
+            console.log("Medicine Instructions enter: " + req.body.medicineInstructions); 
             Visit.findOne({ patient: patient._id, completed: false, clinic: req.user._id }, (err2, visitFound) => {
                 if (err2)
                     console.log(error);
@@ -124,6 +141,15 @@ router.post('/add/reasonForVisit', [passport.authenticate('jwt', { session: fals
                         if (err3)
                             return res.json({ success: false, msg: err })
                         else {
+                            console.log("visit created");
+                            Medicine.find({ medicineInstructions: req.body.medicineInstructions }), (err4, medicineInstructions) => { 
+                                if (err4) 
+                                    console.log("error 4" + err4);
+                                if (medicineInstructions) {
+                                    visit.medicineList.push(medicine._id);
+                                    console.log("Medicine instructions added here"); 
+                                }
+                            }
                             console.log("Success");
                             return res.json({ success: true, msg: "Patient's details successfully added" })
 
@@ -243,10 +269,13 @@ router.post('/add/medicine', [passport.authenticate('jwt', { session: false }), 
                 if (err)
                     console.log(err);
                 if (medicine) {
+                    console.log ("inside medicine");
                     Visit.findOne({ queueNo: req.body.queueNo, completed: false }, (err3, visit) => {
+                        console.log (visit);
                         if (err3)
                             return res.json({ success: false, msg: err3 });
                         if (visit) {
+                            console.log("inside visit med");
                             visit.medicineList.push(medicine._id);
                             visit.save(function (err, visitSaved) {
                                 if (err)
@@ -258,6 +287,25 @@ router.post('/add/medicine', [passport.authenticate('jwt', { session: false }), 
                                     return res.json({ success: false, msg: 'Visit cannot be updated' });
                             });
                         }
+                        if (visit == null)
+                        {
+                            
+                            console.log ("inside null");
+                            Visit.create({queueNo: req.body.queueNo, clinic: req.user.clinic}, (err3, visit) => { // hard coded patient here 
+                                if (err3)    
+                                    return res.json({ success: false, msg: err })
+                                else {
+                                    console.log("visit created");
+                                    
+                                    visit.medicineList.push(medicine._id);
+                                    console.log("Medicine instructions added here");
+                                     
+                                    console.log("Success");
+                                    return res.json({ success: true, msg: "Patient's details successfully added" })
+
+                                }
+                            });
+                        }
                     })
                 } else {
                     // console.log(medicine);
@@ -266,6 +314,44 @@ router.post('/add/medicine', [passport.authenticate('jwt', { session: false }), 
             })
         }
     });
+});
+router.post("/create/visit", [passport.authenticate('jwt', { session: false }), isDoctor], (req, res) => {
+    console.log(req.body);
+    Patient.findOne({nric: req.body.patient.nric}, (findpatientErr, patient) => {
+        if(findpatientErr)
+            return res.json({success: false, msg: findpatientErr});
+        if(patient){
+            medicineList = [];
+            for(var medicine in req.body.medicineList){
+                Medicine.findOne({name: medicine.name}, (err, medicine) => {
+                    if(err)
+                        console.log(err)
+                    if(medicine)
+                        medicineList.push(medicine._id);
+                });
+            }
+            let visit = new Visit({
+                clinic: req.user.clinic,
+                patient: patient._id,
+                medicineList: medicineList,
+                queueNo: req.body.queueNo,
+                reasonForVisit: req.body.reasonForVisit
+            });
+            Visit.create(visit, (err, visit) => {
+                if (err) {
+                    console.log(err);
+                    return res.json({ success: false, msg: 'Visit cannot be created' });
+                }
+                if (visit) {
+                    return res.json({ success: true, msg: 'Visit successfully created' });
+
+                }
+            })
+        } else {
+            return res.json({ success: false, msg: "Patient doesn't exist"});
+        }
+
+    })
 });
 
 // get medicine 

@@ -31,7 +31,6 @@ const VisitSchema = mongoose.Schema({
         ref: 'Clinic',
         required: true
     }
-
   
 
     
