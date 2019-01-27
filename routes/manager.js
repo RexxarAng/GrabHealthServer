@@ -11,6 +11,7 @@ const Validator = require('../validation/validation');
 const password = require('secure-random-password');
 const MedicineList = require('../models/medicinelist');
 const Medicine = require('../models/medicine');
+const BlackList = require('../models/blacklist');
 var transporter = nodemailer.createTransport(smtpTransport({
     service: 'gmail',
     auth: {
@@ -37,7 +38,17 @@ isManager = function (req, res, next) {
     }
 }
 
-router.post('/register/receptionist', [passport.authenticate('jwt', { session: false }), isManager], (req, res, next) => {
+isNotBlackListedToken = function(req, res, next){
+    BlackList.findOne({'token': req.headers.authorization}, (err, token) => {
+        if(token){
+            res.json({success: false, unauthenticated: true, msg: "Blacklisted token!"})
+        } else {
+            next();
+        }
+    });
+}
+
+router.post('/register/receptionist', [passport.authenticate('jwt', { session: false }), isManager, isNotBlackListedToken], (req, res, next) => {
     if (!Validator.validateNric(req.body.nric)) {
         return res.json({ success: false, msg: "invalid ic number!" });
     };
@@ -103,7 +114,7 @@ router.post('/register/receptionist', [passport.authenticate('jwt', { session: f
 
 });
 
-router.post('/edit/receptionist', [passport.authenticate('jwt', { session: false }), isManager], (req, res, next) => {
+router.post('/edit/receptionist', [passport.authenticate('jwt', { session: false }), isManager, isNotBlackListedToken], (req, res, next) => {
     if (!Validator.validateContactNo(req.body.contactNo)) {
         return res.json({ success: false, msg: "Invalid contact number" })
     }
@@ -121,7 +132,7 @@ router.post('/edit/receptionist', [passport.authenticate('jwt', { session: false
     });
 });
 
-router.post('/remove/receptionist', [passport.authenticate('jwt', { session: false }), isManager], (req, res, next) => {
+router.post('/remove/receptionist', [passport.authenticate('jwt', { session: false }), isManager, isNotBlackListedToken], (req, res, next) => {
     if (!Validator.validateNric(req.body.nric)) {
         return res.json({ success: false, msg: "invalid ic number!" });
     }
@@ -143,7 +154,7 @@ router.post('/remove/receptionist', [passport.authenticate('jwt', { session: fal
     })
 });
 
-router.post('/register/doctor', [passport.authenticate('jwt', { session: false }), isManager], (req, res, next) => {
+router.post('/register/doctor', [passport.authenticate('jwt', { session: false }), isManager, isNotBlackListedToken], (req, res, next) => {
     if (!Validator.validateNric(req.body.nric)) {
         return res.json({ success: false, msg: "invalid ic number!" });
     };
@@ -210,7 +221,7 @@ router.post('/register/doctor', [passport.authenticate('jwt', { session: false }
 });
 
 
-router.post('/edit/doctor', [passport.authenticate('jwt', { session: false }), isManager], (req, res, next) => {
+router.post('/edit/doctor', [passport.authenticate('jwt', { session: false }), isManager, isNotBlackListedToken], (req, res, next) => {
     if (!Validator.validateContactNo(req.body.contactNo)) {
         return res.json({ success: false, msg: "Invalid contact number" })
     }
@@ -228,7 +239,7 @@ router.post('/edit/doctor', [passport.authenticate('jwt', { session: false }), i
     });
 });
 
-router.post('/remove/doctor', [passport.authenticate('jwt', { session: false }), isManager], (req, res, next) => {
+router.post('/remove/doctor', [passport.authenticate('jwt', { session: false }), isManager, isNotBlackListedToken], (req, res, next) => {
     if (!Validator.validateNric(req.body.nric)) {
         return res.json({ success: false, msg: "invalid ic number!" });
     }
@@ -250,7 +261,7 @@ router.post('/remove/doctor', [passport.authenticate('jwt', { session: false }),
     })
 });
 
-router.get('/profile', [passport.authenticate('jwt', { session: false }), isManager], (req, res, next) => {
+router.get('/profile', [passport.authenticate('jwt', { session: false }), isManager, isNotBlackListedToken], (req, res, next) => {
     req.user.password = undefined;
     var exclusion = { _id: 0 };
     Clinic.findOne(req.user.clinic, exclusion, (err, clinic) => {
@@ -263,7 +274,7 @@ router.get('/profile', [passport.authenticate('jwt', { session: false }), isMana
     })
 });
 
-router.get('/clinic/team', [passport.authenticate('jwt', { session: false }), isManager], (req, res, next) => {
+router.get('/clinic/team', [passport.authenticate('jwt', { session: false }), isManager, isNotBlackListedToken], (req, res, next) => {
     Receptionist.find({ clinic: req.user.clinic })
         .select('-password').exec(function (err, receptionists) {
             Doctor.find({ clinic: req.user.clinic })
@@ -274,7 +285,7 @@ router.get('/clinic/team', [passport.authenticate('jwt', { session: false }), is
 });
 
 
-router.get('/medicineList', [passport.authenticate('jwt', { session: false }), isManager], (req, res, next) => {
+router.get('/medicineList', [passport.authenticate('jwt', { session: false }), isManager, isNotBlackListedToken], (req, res, next) => {
     MedicineList.findOne({ clinic: req.user.clinic })
         .populate({ path: 'list', select: 'name category price effects' })
         .exec(function (err, medicineList) {
@@ -282,7 +293,7 @@ router.get('/medicineList', [passport.authenticate('jwt', { session: false }), i
         })
 });
 
-router.post('/add/medicine', [passport.authenticate('jwt', { session: false }), isManager], (req, res, next) => {
+router.post('/add/medicine', [passport.authenticate('jwt', { session: false }), isManager, isNotBlackListedToken], (req, res, next) => {
     req.body.clinic = req.user.clinic;
     let newMedicine = new Medicine(req.body);
     MedicineList.findOne({ clinic: req.user.clinic }, (err, medicineList) => {
@@ -314,7 +325,7 @@ router.post('/add/medicine', [passport.authenticate('jwt', { session: false }), 
     });
 });
 
-router.post('/remove/medicine', [passport.authenticate('jwt', { session: false }), isManager], (req, res, next) => {
+router.post('/remove/medicine', [passport.authenticate('jwt', { session: false }), isManager, isNotBlackListedToken], (req, res, next) => {
     MedicineList.findOne({ clinic: req.user.clinic }, (err, medicineList) => {
         if (err)
             return res.json({ success: false, msg: 'Medicine list cannot be found' });
