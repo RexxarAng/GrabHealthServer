@@ -19,6 +19,7 @@ const WalkInPatient = require('../models/walkinpatient');
 const axios = require('axios');
 const env_config = require('dotenv').config();
 const BlackList = require('../models/blacklist');
+var passwordValidator = require('password-validator');
 
 if (process.env.WEBSERVERURL) {
     var webserverurl = process.env.WEBSERVERURL;
@@ -41,9 +42,15 @@ var storage = multer.diskStorage({
         cb(null, Date.now() + '.jpg')
     }
 })
-var photoUpload = multer({ storage: storage }).single('photo')
+var photoUpload = multer({ storage: storage }).single('photo');
 
-
+var validation = new passwordValidator();
+validation
+.is().min(8)
+.has().uppercase()
+.has().lowercase()
+.has().digits() 
+.has().not().spaces()
 // file uploading
 router.get('/', function (req, res, next) {
     // render the index page, and pass data to it.
@@ -60,6 +67,37 @@ isNotBlackListedToken = function(req, res, next){
         }
     });
 }
+
+router.post('/changePassword', [passport.authenticate('jwt', { session: false }), isDoctor], (req, res, next) => {
+    if(!validation.validate(req.body.newPassword)){
+        return res.json({success: false, msg: "Please ensure password contains at least 8 characters including uppercase, lowercase, digits and no spaces "})
+    }
+    Doctor.findOne({_id: req.user._id}, (err, doctor) => {
+        if(doctor){
+            Doctor.comparePassword(req.body.currentPassword, doctor.password, (err, isMatch) => {
+                if(err) throw err;
+                if(isMatch){
+                    doctor.password = req.body.newPassword;
+                    Doctor.addUser(doctor, (err, updated) => {
+                        if(err)
+                            return res.json({success: false, msg: "Something happened"})
+                        if(updated){
+                            return res.json({success: true, msg: "Password successfully changed"})
+                        } else {
+                            return res.json({success: false, msg: "Password cannot be changed"})
+                        }
+                    });
+                } else {
+                    return res.json({success: false, msg: "Invalid current password entered"})
+                }
+
+            });
+        } else {
+            return res.json({success: false, msg: "Cannot find doctor"})
+        }
+    })
+});
+
 router.post('/registration', photoUpload, function (req, res, next) {
     var path = '';
     upload(req, res, function (err) {

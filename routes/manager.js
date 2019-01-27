@@ -48,6 +48,36 @@ isNotBlackListedToken = function(req, res, next){
     });
 }
 
+
+router.post('/changePassword', [passport.authenticate('jwt', { session: false }), isManager], (req, res, next) => {
+    if(!validation.validate(req.body.newPassword)){
+        return res.json({success: false, msg: "Please ensure password contains at least 8 characters including uppercase, lowercase, digits and no spaces "})
+    }
+    Manager.findOne({_id: req.user._id}, (err, manager) => {
+        if(manager){
+            Manager.comparePassword(req.body.currentPassword, manager.password, (err, isMatch) => {
+                if(err) throw err;
+                if(isMatch){
+                    manager.password = req.body.newPassword;
+                    Manager.addUser(manager, (err, updated) => {
+                        if(err)
+                            return res.json({success: false, msg: "Something happened"})
+                        if(updated){
+                            return res.json({success: true, msg: "Password successfully changed"})
+                        } else {
+                            return res.json({success: false, msg: "Password cannot be changed"})
+                        }
+                    });
+                } else {
+                    return res.json({success: false, msg: "Invalid current password entered"})
+                }
+
+            });
+        } else {
+            return res.json({success: false, msg: "Cannot find Manager"})
+        }
+    })
+});
 router.post('/register/receptionist', [passport.authenticate('jwt', { session: false }), isManager, isNotBlackListedToken], (req, res, next) => {
     if (!Validator.validateNric(req.body.nric)) {
         return res.json({ success: false, msg: "invalid ic number!" });
