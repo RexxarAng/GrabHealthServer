@@ -39,6 +39,36 @@ isNotBlackListedToken = function(req, res, next){
     });
 }
 
+
+router.post('/changePassword', [passport.authenticate('jwt', { session: false }), isReceptionist], (req, res, next) => {
+    if(!validation.validate(req.body.newPassword)){
+        return res.json({success: false, msg: "Please ensure password contains at least 8 characters including uppercase, lowercase, digits and no spaces "})
+    }
+    Receptionist.findOne({_id: req.user._id}, (err, receptionist) => {
+        if(receptionist){
+            Receptionist.comparePassword(req.body.currentPassword, receptionist.password, (err, isMatch) => {
+                if(err) throw err;
+                if(isMatch){
+                    receptionist.password = req.body.newPassword;
+                    Receptionist.addUser(receptionist, (err, updated) => {
+                        if(err)
+                            return res.json({success: false, msg: "Something happened"})
+                        if(updated){
+                            return res.json({success: true, msg: "Password successfully changed"})
+                        } else {
+                            return res.json({success: false, msg: "Password cannot be changed"})
+                        }
+                    });
+                } else {
+                    return res.json({success: false, msg: "Invalid current password entered"})
+                }
+
+            });
+        } else {
+            return res.json({success: false, msg: "Cannot find Manager"})
+        }
+    })
+});
 //create patient
 /*router.post('/createPatient', [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
     console.log(req.body);
@@ -347,6 +377,7 @@ router.get("/patient-list", [passport.authenticate('jwt', {session:false}), isRe
             console.log(patients);
             if(err)
                 return res.send({success: false, msg: err}).status(404);
+            console.log(patients);
             return res.send({success: true, 'patients': patients }).status(201);
         })
         
