@@ -340,15 +340,6 @@ router.post('/editPatientInfo', [passport.authenticate('jwt', {session:false}), 
 
 // Display walk-in patient list
 router.get("/patient-list", [passport.authenticate('jwt', {session:false}), isReceptionist, isNotBlackListedToken], (req, res) => {
-    // WalkInPatient.find({"clinic": req.user.clinic}).sort({"firstName":1}).limit().exec(function(err,patients) {
-        // if(err)
-        //     res.send({success: false, msg: err}).status(404);
-        // if(patients)
-        //     res.send({success: true, 'v': patients}).status(201);
-        // else
-        //     res.send({success: false, msg: 'Something happened'}).status(404);
-        
-    // });
 
     WalkInPatient.find({ clinic: req.user.clinic })
         .populate({ path: 'patient', select: '-password', options: { sort: { 'firstName': -1 } } })
@@ -678,58 +669,8 @@ router.post("/create/payment", [passport.authenticate('jwt', {session:false}), i
 });
 
 
-// // Complete Payment
-// router.get('/getPayment', [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
-//     if(!Validator.validateNric(req.body.patient)){
-//         return res.json({success:false, msg: "Invalid IC number!"});
-//     };
+// Get visit history
 
-//     axios.post(webserverurl + '/GrabHealthWeb/createPayment', {                       
-//         clinic: req.user.clinic,
-//         nric: req.body.nric,
-//     })
-//     .then((res1) => {
-//         data = res1['data'];
-//         if(data['success']) {
-//             Patient.findOne({nric: req.body.nric}, (err, patient) => {
-//                 if(err){
-//                     res.json({success: false, msg: err});
-//                 }
-//                 if(patient){
-//                     patient.save(function(err2, changesMade){
-//                         if(err2){
-//                                 return res.json({success: false, msg: err2});
-//                         } else {
-//                             if(changesMade){
-//                                 patient.firstName = req.body.firstName;
-//                                 patient.lastName = req.body.lastName;
-//                                 patient.nric = req.body.nric;
-//                                 patient.gender = req.body.gender;
-//                                 patient.address = req.body.address;
-//                                 patient.dob = req.body.dob;
-//                                 patient.nationality = req.body.nationality;
-//                                 patient.contactNo = req.body.contactNo;
-//                                 patient.email = req.body.email;
-//                                 patient.save();
-                                
-//                                 return res.json({success: true, msg: "Patient details have been updated"});
-//                             } else 
-//                                 return res.json({success: false, msg: "No changes have been made"});
-//                         }
-//                     });                   
-//                 } else {
-//                     return res.json({success: false, msg: "Unable to save changes successfully"});
-//                 }
-//             });
-//         } else{
-//             return res.json({success: false, msg: 'Patient details cannot be updated successfully!'});
-//         }
-//     })
-//     .catch((error) => {
-//         console.log(error);
-//         return res.json({success: false, msg: "Some error has occurred"});
-//     });
-//});
 
 
 
