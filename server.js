@@ -73,8 +73,14 @@ app.use('/receptionist', receptionist);
 //Admin route
 app.use('/admin', admin);
 
-//Patient route
-app.use('/patient', patient);
+//External Patient route
+if (process.env.HTTPS) {
+    //Don't allow server with portforwarding to access internal routes
+} else {
+    //When in development stage
+    app.use('/patient', patient);
+
+}
 
 //Passport Middleware
 app.use(passport.initialize());
@@ -108,6 +114,7 @@ app.get('/', (req, res) => {
 })
 
 if (process.env.HTTPS) {
+    //Production state
     https.createServer({
         key: fs.readFileSync(process.env.HTTPS_KEY),
         cert: fs.readFileSync(process.env.HTTPS_CERT)
@@ -115,6 +122,7 @@ if (process.env.HTTPS) {
     .listen(port, () => console.log('Express https server running on port ' + port));
 }
 else {
+    //Development state
     app.listen(port, () => console.log('Express server running on port ' + port));
 }
 internalServer.listen(appPort, () => console.log('Internal Express server running on port ' + appPort))
