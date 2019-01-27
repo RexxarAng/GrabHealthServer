@@ -18,25 +18,34 @@ const PaymentSchema = mongoose.Schema({
         type: Schema.Types.ObjectId,
         ref: 'Clinic',
         required: true
-    }, 
-    doctor: {
-        type: Schema.Types.ObjectId,
-        ref: 'Doctor',
-        required: true
     },
     patient: {
         type: Schema.Types.ObjectId,
         ref: 'Patient',
         required: true
     },
-    medPrescription: {
-        type: String,
-        required: true
-    },
     discount: {
         type: Number,
         default: 0
+    },
+    visit: {
+        type: Schema.Types.ObjectId,
+        ref: 'Visit',
+        required: true
+    },
+    gst: {
+        type: Number,
+        required: true
+    },
+    subtotal: {
+        type: Number,
+        required: true
+    },
+    total: {
+        type: Number,
+        required: true
     }
+
 
 });
 

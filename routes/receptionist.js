@@ -11,6 +11,7 @@ const axios = require('axios');
 const Patient = require('../models/patient');
 const env_config = require('dotenv').config(); 
 const Visit = require('../models/visit');
+const password = require('secure-random-password');
 
 if(process.env.WEBSERVERURL){
     var webserverurl = process.env.WEBSERVERURL;
@@ -544,9 +545,123 @@ router.get("/visits", [passport.authenticate('jwt', {session:false}), isReceptio
     });
 });
 
-// router.get("/create/payment", [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
+router.post("/create/payment", [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
+    console.log(req.body);
+    Visit.findOne({clinic: req.user.clinic, patient: req.body.patient._id, completed: false})
+    .populate({path: 'patient', select: '-password' })
+    .populate({path: 'medicineList'})
+    .populate({path: 'clinic', select: '-receptionists -doctors -manager'})
+    .populate({path: 'doctor', select: '-password'})
+    .exec(function (err, visit) {
+        if(err)
+            return res.json({success: false, msg:err});
+        if(visit){
+            Payment.findOne({visit: visit._id})
+            .populate({path: 'patient', select: '-password' })
+            .populate({path: 'visit', populate: 
+                [
+                    {
+                        path: 'doctor',
+                        model: 'Doctor',
+                        select: '-password'
+                },
+                    {
+                        path: 'medicineList',
+                        model: 'Medicine'
+                    }
+                ]
+            })
+            .populate({path: 'clinic', select: '-receptionists -doctors -manager'})
+            .exec(function (err2, paymentFound) {
+                if(err2)
+                    console.log(err2);
+                if(paymentFound){
+                    return res.json({success: true, payment: paymentFound});
+                } else {
+                    let subtotal = 0.0;
+                    visit.medicineList.forEach(medicine => {
+                        subtotal = subtotal + parseFloat(medicine.price.value);
+                    });
+                    subtotal = subtotal + visit.clinic.consultationFee;
+                    gst = subtotal * 0.07;
+                    total = subtotal + gst;
+                    let randomReceiptNo = password.randomPassword({ length: 6, characters: password.digits });;
+                    let year = "Y19 ";
+                    var now = new Date();
+                    var start = new Date(now.getFullYear(), 0, 0);
+                    var diff = (now - start) + ((start.getTimezoneOffset() - now.getTimezoneOffset()) * 60 * 1000);
+                    var oneDay = 1000 * 60 * 60 * 24;
+                    var day = Math.floor(diff / oneDay);
+                    receiptNo = year + day + randomReceiptNo;
+                    let newPayment = new Payment({
+                        receiptNo: receiptNo,
+                        clinic: req.user.clinic,
+                        patient: req.body.patient._id,
+                        visit: visit._id,
+                        gst: gst,
+                        subtotal: subtotal,
+                        total: total
+                    });
+                    newPayment.save(function(err, newPaymentSaved){
+                        if(err)
+                            res.json({success: false, msg: 'Something happened, Cannot create a new payment'});
+                        if(newPaymentSaved){
+                            axios.post(webserverurl + '/GrabHealthWeb/changeAppointmentStatus', {
+                                nric: visit.patient.nric,
+                                clinic: req.user.clinic,
+                                status: 'Accepted',
+                                date: newPaymentSaved.date
+                            })
+                            .then((res1) => {
+                                data = res1['data'];
+                                console.log(data);
+                                if(data['success']) {
+                                    console.log("successfuly updated appointment status")
+                                } else{
+                                    console.log("failed to update appointment status");
+                                }
+                            })                                                                                                                                                                                                                                                                           
+                            .catch((error) => {
+                                console.log(error);
+                            });
+                            newPaymentSaved
+                            .populate({path: 'patient', select: '-password' })
+                            .populate({path: 'visit', populate: 
+                                [
+                                    {
+                                        path: 'doctor',
+                                        model: 'Doctor',
+                                        select: '-password'
+                                },
+                                    {
+                                        path: 'medicineList',
+                                        model: 'Medicine'
+                                    }
+                                ]
+                            })
+                            .populate({path: 'clinic', select: '-receptionists -doctors -manager'})
+                            .execPopulate(function (err, paymentRetrieved) {
+                                if(err)
+                                    res.json({success: false, msg: 'Cannot retrieve payment'});
+                                if(paymentRetrieved){
+                                    visit.completed = true
+                                    visit.save();
+                                    return res.json({success: true, payment: paymentRetrieved});
+                                }
+                            });
+                            } else {
+                                res.json({success: false, msg: 'Cannot create a new payment'});
+                            }
+                    });
+                                
+                }
+            });
 
-// });
+        } else {
+            return res.json({success: false, msg: 'Visit does not exist'});
+        }
+    });
+});
 
 
 // // Complete Payment

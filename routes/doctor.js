@@ -18,6 +18,7 @@ const Validator = require('../validation/validation');
 const WalkInPatient = require('../models/walkinpatient');
 const axios = require('axios');
 const env_config = require('dotenv').config();
+var async = require('async');
 
 if (process.env.WEBSERVERURL) {
     var webserverurl = process.env.WEBSERVERURL;
@@ -265,7 +266,7 @@ router.post('/add/medicine', [passport.authenticate('jwt', { session: false }), 
         if (err)
             return res.json({ success: false, msg: 'Medicine list cannot be found' });
         if (selectedMedicineList) {
-            Medicine.findOne({ clinic: req.user.clinic, name: req.body.name }, (err, medicine) => {
+             Medicine.findOne({ clinic: req.user.clinic, name: req.body.name }, (err, medicine) => {
                 if (err)
                     console.log(err);
                 if (medicine) {
@@ -288,8 +289,7 @@ router.post('/add/medicine', [passport.authenticate('jwt', { session: false }), 
                             });
                         }
                         if (visit == null)
-                        {
-                            
+                        { 
                             console.log ("inside null");
                             Visit.create({queueNo: req.body.queueNo, clinic: req.user.clinic}, (err3, visit) => { // hard coded patient here 
                                 if (err3)    
@@ -325,54 +325,58 @@ router.post("/create/visit", [passport.authenticate('jwt', { session: false }), 
                 if (err2)
                     console.log(error);
                 if (!visitFound) {
-                    medicineList = [];
-                    req.body.medicineList.forEach(medicine => {
-                        console.log(medicine.name);
-                        console.log(req.user.clinic);
-                        Medicine.findOne({name: medicine.name, clinic: req.user.clinic}, (err, medicineFound) => {
-                            if(err)
-                                console.log(err)
-                            if(medicineFound){
-                                medicineList.push(medicineFound._id);
-                                console.log(medicineFound);
-                            } else{
-                                console.log('Cant find the medicine');
-                            }
-                        });
-                    });
-                    console.log(medicineList);
-                    let visit = new Visit({
-                        clinic: req.user.clinic,
-                        patient: patient._id,
-                        medicineList: medicineList,
-                        queueNo: req.body.queueNo,
-                        reasonForVisit: req.body.reasonForVisit,
-                        doctor: req.user._id
-                    });
-                    Visit.create(visit, (err, visit) => {
-                        if (err) {
-                            return res.json({ success: false, msg: 'Please ensure that reason for visit is entered' });
-                        }
-                        if (visit) {
-                            axios.post(webserverurl + '/GrabHealthWeb/removeFromQueue', {
-                                nric: patient.nric,
-                                clinic: req.user.clinic
-                            })
-                            .then((res1) => {
-                                data = res1['data'];
-                                if (data['success']) {
-                                    return res.json({ success: true, msg: 'Visit successfully created' });
-                                } else {
-                                    return res.json({ success: false, msg: data['msg'] });
+                    let medicineList = [];
+                    const loopMedicineList = async () => {
+                        await Promise.all(req.body.medicineList.map(async medicine => {
+                            console.log(medicine.name);
+                            console.log(req.user.clinic);
+                            await Medicine.findOne({name: medicine.name, clinic: req.user.clinic}, (err, medicineFound) => {
+                                if(err)
+                                    console.log(err)
+                                if(medicineFound){
+                                    medicineList.push(medicineFound._id);
+                                    console.log(medicineFound);
+                                } else{
+                                    console.log('Cant find the medicine');
                                 }
-                            })
-                            .catch((error) => {
-                                console.log(error);
-                                return res.json({ success: false, msg: "Some error has occurred" });
-                            })
-        
-                        }
-                    })
+                            });                    
+                        }));
+                        //Done
+                        let visit = new Visit({
+                            clinic: req.user.clinic,
+                            patient: patient._id,
+                            medicineList: medicineList,
+                            queueNo: req.body.queueNo,
+                            reasonForVisit: req.body.reasonForVisit,
+                            doctor: req.user._id
+                        });
+                        Visit.create(visit, (err, visit) => {
+                            if (err) {
+                                return res.json({ success: false, msg: 'Please ensure that reason for visit is entered' });
+                            }
+                            if (visit) {
+                                axios.post(webserverurl + '/GrabHealthWeb/removeFromQueue', {
+                                    nric: patient.nric,
+                                    clinic: req.user.clinic
+                                })
+                                .then((res1) => {
+                                    data = res1['data'];
+                                    if (data['success']) {
+                                        return res.json({ success: true, msg: 'Visit successfully created' });
+                                    } else {
+                                        return res.json({ success: false, msg: data['msg'] });
+                                    }
+                                })
+                                .catch((error) => {
+                                    console.log(error);
+                                    return res.json({ success: false, msg: "Some error has occurred" });
+                                })
+            
+                            }
+                        })
+                    }
+                    loopMedicineList();
+                    
                 } else {
                     return res.json({ success: false, msg: "Visit already pending for payment" })
                 }
