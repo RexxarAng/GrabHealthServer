@@ -324,7 +324,9 @@ router.post('/add/medicine', [passport.authenticate('jwt', { session: false }), 
         }
     });
 });
-router.post("/create/visit", [passport.authenticate('jwt', { session: false }), isDoctor, isNotBlackListedToken], (req, res) => {
+
+
+router.post("/create/visit", [passport.authenticate('jwt', { session: false }), isDoctor], (req, res) => {
     console.log(req.body);
     Patient.findOne({nric: req.body.patient.nric}, (findpatientErr, patient) => {
         if(findpatientErr)

@@ -556,7 +556,9 @@ router.get("/visits", [passport.authenticate('jwt', {session:false}), isReceptio
     });
 });
 
-router.post("/create/payment", [passport.authenticate('jwt', {session:false}), isReceptionist, isNotBlackListedToken], (req, res) => {
+
+// Create payment
+router.post("/create/payment", [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
     console.log(req.body);
     Visit.findOne({clinic: req.user.clinic, patient: req.body.patient._id, completed: false})
     .populate({path: 'patient', select: '-password' })
