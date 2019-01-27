@@ -24,10 +24,6 @@ const PaymentSchema = mongoose.Schema({
         ref: 'Patient',
         required: true
     },
-    discount: {
-        type: Number,
-        default: 0
-    },
     visit: {
         type: Schema.Types.ObjectId,
         ref: 'Visit',
