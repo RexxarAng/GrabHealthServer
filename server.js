@@ -33,7 +33,6 @@ const internalServer = express();
 const appPort = 60004;
 internalServer.use(helmet());
 internalServer.use(cors());
-internalServer.use('/patient', patient);
 
 //Body Parser MiddeWare
 //Parse application/json
@@ -41,6 +40,7 @@ internalServer.use(bodyParser.json());
 internalServer.use(bodyParser.urlencoded({extended: true}));
 internalServer.use(bodyCleaner);
 
+internalServer.use('/patient', patient);
 //Prevent nosql injection
 internalServer.use(mongoSanitize({
     replaceWith: '_'
