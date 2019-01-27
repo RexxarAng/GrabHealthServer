@@ -289,8 +289,7 @@ router.post('/add/medicine', [passport.authenticate('jwt', { session: false }), 
                             });
                         }
                         if (visit == null)
-                        {
-                            
+                        { 
                             console.log ("inside null");
                             Visit.create({queueNo: req.body.queueNo, clinic: req.user.clinic}, (err3, visit) => { // hard coded patient here 
                                 if (err3)    
