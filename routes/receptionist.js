@@ -12,6 +12,7 @@ const Patient = require('../models/patient');
 const env_config = require('dotenv').config(); 
 const Visit = require('../models/visit');
 const password = require('secure-random-password');
+const BlackList = require('../models/blacklist');
 
 if(process.env.WEBSERVERURL){
     var webserverurl = process.env.WEBSERVERURL;

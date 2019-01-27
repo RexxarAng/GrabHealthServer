@@ -11,6 +11,7 @@ const Validator = require('../validation/validation');
 const password = require('secure-random-password');
 const MedicineList = require('../models/medicinelist');
 const Medicine = require('../models/medicine');
+const BlackList = require('../models/blacklist');
 var transporter = nodemailer.createTransport(smtpTransport({
     service: 'gmail',
     auth: {

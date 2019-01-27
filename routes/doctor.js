@@ -18,7 +18,7 @@ const Validator = require('../validation/validation');
 const WalkInPatient = require('../models/walkinpatient');
 const axios = require('axios');
 const env_config = require('dotenv').config();
-var async = require('async');
+const BlackList = require('../models/blacklist');
 
 if (process.env.WEBSERVERURL) {
     var webserverurl = process.env.WEBSERVERURL;
