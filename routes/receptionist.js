@@ -28,6 +28,16 @@ isReceptionist = function(req, res, next){
     }
 }
 
+isNotBlackListedToken = function(req, res, next){
+    BlackList.findOne({'token': req.headers.authorization}, (err, token) => {
+        if(token){
+            res.json({success: false, unauthenticated: true, msg: "Blacklisted token!"})
+        } else {
+            next();
+        }
+    });
+}
+
 //create patient
 /*router.post('/createPatient', [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
     console.log(req.body);
@@ -121,7 +131,7 @@ isReceptionist = function(req, res, next){
 });*/
 
 // Create patient
-router.post('/createPatient', [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
+router.post('/createPatient', [passport.authenticate('jwt', {session:false}), isReceptionist, isNotBlackListedToken], (req, res) => {
     console.log(req.body);
     if(!Validator.validateNric(req.body.nric)){
         return res.json({success:false, msg: "Invalid IC number!"});
@@ -246,7 +256,7 @@ router.post('/createPatient', [passport.authenticate('jwt', {session:false}), is
 
 
 // Edit patient details
-router.post('/editPatientInfo', [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {    
+router.post('/editPatientInfo', [passport.authenticate('jwt', {session:false}), isReceptionist, isNotBlackListedToken], (req, res) => {    
     if(!Validator.validateFirstName(req.body.firstName)){
         return res.json({success: false, msg: "Invalid first name!"});
     };
@@ -328,7 +338,7 @@ router.post('/editPatientInfo', [passport.authenticate('jwt', {session:false}), 
 
 
 // Display walk-in patient list
-router.get("/patient-list", [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
+router.get("/patient-list", [passport.authenticate('jwt', {session:false}), isReceptionist, isNotBlackListedToken], (req, res) => {
     // WalkInPatient.find({"clinic": req.user.clinic}).sort({"firstName":1}).limit().exec(function(err,patients) {
         // if(err)
         //     res.send({success: false, msg: err}).status(404);
@@ -352,7 +362,7 @@ router.get("/patient-list", [passport.authenticate('jwt', {session:false}), isRe
 
 
 // Add patient to queue
-router.post('/addPatientToQueue', [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
+router.post('/addPatientToQueue', [passport.authenticate('jwt', {session:false}), isReceptionist, isNotBlackListedToken], (req, res) => {
     console.log(req.body);
     req.body.clinic = req.user.clinic;
 
@@ -385,7 +395,7 @@ router.post('/addPatientToQueue', [passport.authenticate('jwt', {session:false})
 
 
 // Remove patient from queue
-router.post('/removePatientFromQueue', [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
+router.post('/removePatientFromQueue', [passport.authenticate('jwt', {session:false}), isReceptionist, isNotBlackListedToken], (req, res) => {
     console.log(req.body);
     axios.post(webserverurl + '/GrabHealthWeb/removePatientFromQueue', {
         nric: req.body.nric,
@@ -409,7 +419,7 @@ router.post('/removePatientFromQueue', [passport.authenticate('jwt', {session:fa
 
 
 //Get queue list
-router.get("/queueList", [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
+router.get("/queueList", [passport.authenticate('jwt', {session:false}), isReceptionist, isNotBlackListedToken], (req, res) => {
     console.log(req.body);
     axios.post(webserverurl + '/GrabHealthWeb/queueList',{
         clinic: req.user.clinic
@@ -432,7 +442,7 @@ router.get("/queueList", [passport.authenticate('jwt', {session:false}), isRecep
 
 
 //Get pending approval list
-router.get("/pendingList", [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
+router.get("/pendingList", [passport.authenticate('jwt', {session:false}), isReceptionist, isNotBlackListedToken], (req, res) => {
     axios.post(webserverurl + '/GrabHealthWeb/pendingList',{
         clinic: req.user.clinic
     })
@@ -453,7 +463,7 @@ router.get("/pendingList", [passport.authenticate('jwt', {session:false}), isRec
 
 
 // Accept appointment request
-router.post('/acceptAppointmentRequest', [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
+router.post('/acceptAppointmentRequest', [passport.authenticate('jwt', {session:false}), isReceptionist, isNotBlackListedToken], (req, res) => {
     console.log(req.body);
     req.body.clinic = req.user.clinic;
 
@@ -487,7 +497,7 @@ router.post('/acceptAppointmentRequest', [passport.authenticate('jwt', {session:
 
 
 // Reject appointment request
-router.post('/rejectAppointmentRequest', [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
+router.post('/rejectAppointmentRequest', [passport.authenticate('jwt', {session:false}), isReceptionist, isNotBlackListedToken], (req, res) => {
     console.log(req.body);
     axios.post(webserverurl + '/GrabHealthWeb/rejectAppointmentRequest', {
         nric: req.body.nric,
@@ -511,7 +521,7 @@ router.post('/rejectAppointmentRequest', [passport.authenticate('jwt', {session:
 
 
 // Display all patients in clinic
-router.get("/all-patient-list", [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
+router.get("/all-patient-list", [passport.authenticate('jwt', {session:false}), isReceptionist, isNotBlackListedToken], (req, res) => {
     axios.post(webserverurl + '/GrabHealthWeb/all-patient-list',{
         clinic: req.user.clinic,
         nric: req.body.nric
@@ -531,7 +541,7 @@ router.get("/all-patient-list", [passport.authenticate('jwt', {session:false}), 
     
 });
 
-router.get("/visits", [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
+router.get("/visits", [passport.authenticate('jwt', {session:false}), isReceptionist, isNotBlackListedToken], (req, res) => {
     Visit.find({clinic: req.user.clinic, completed: false})
     .populate({path: 'patient', select: '-password' })
     .populate({path: 'medicineList'})
@@ -545,7 +555,7 @@ router.get("/visits", [passport.authenticate('jwt', {session:false}), isReceptio
     });
 });
 
-router.post("/create/payment", [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
+router.post("/create/payment", [passport.authenticate('jwt', {session:false}), isReceptionist, isNotBlackListedToken], (req, res) => {
     console.log(req.body);
     Visit.findOne({clinic: req.user.clinic, patient: req.body.patient._id, completed: false})
     .populate({path: 'patient', select: '-password' })
@@ -610,7 +620,8 @@ router.post("/create/payment", [passport.authenticate('jwt', {session:false}), i
                                 nric: visit.patient.nric,
                                 clinic: req.user.clinic,
                                 status: 'Accepted',
-                                date: newPaymentSaved.date
+                                date: newPaymentSaved.date,
+                                billAmount: newPaymentSaved.total
                             })
                             .then((res1) => {
                                 data = res1['data'];

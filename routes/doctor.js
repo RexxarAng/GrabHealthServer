@@ -51,6 +51,15 @@ router.get('/', function (req, res, next) {
 });
 
 
+isNotBlackListedToken = function(req, res, next){
+    BlackList.findOne({'token': req.headers.authorization}, (err, token) => {
+        if(token){
+            res.json({success: false, unauthenticated: true, msg: "Blacklisted token!"})
+        } else {
+            next();
+        }
+    });
+}
 router.post('/registration', photoUpload, function (req, res, next) {
     var path = '';
     upload(req, res, function (err) {
@@ -72,7 +81,7 @@ router.post('/registration', photoUpload, function (req, res, next) {
     });
 })
 
-router.get('/medicineList', [passport.authenticate('jwt', { session: false }), isDoctor], (req, res, next) => {
+router.get('/medicineList', [passport.authenticate('jwt', { session: false }), isDoctor, isNotBlackListedToken], (req, res, next) => {
     MedicineList.findOne({ clinic: req.user.clinic })
         .populate({ path: 'list', select: 'name category price effects' })
         .exec(function (err, medicineList) {
@@ -91,7 +100,7 @@ router.get('/medicineList', [passport.authenticate('jwt', { session: false }), i
 //         })
 // });
 
-router.get('/reasonForVisit', [passport.authenticate('jwt', { session: false }), isDoctor], (req, res, next) => {
+router.get('/reasonForVisit', [passport.authenticate('jwt', { session: false }), isDoctor, isNotBlackListedToken], (req, res, next) => {
     Visit.findOne({ patient: req.user.patient }, (err, reasonForVisit) => { 
         if (err) {
             console.log(err);
@@ -104,7 +113,7 @@ router.get('/reasonForVisit', [passport.authenticate('jwt', { session: false }),
 
 });
 
-router.get('/instructions', [passport.authenticate('jwt', { session: false }), isDoctor], (req, res, next) => {
+router.get('/instructions', [passport.authenticate('jwt', { session: false }), isDoctor, isNotBlackListedToken], (req, res, next) => {
     Visit.findOne({ patient: req.user.patient }, (err, medicineInstructions) => { 
         if (err) {
             console.log(err);
@@ -182,7 +191,7 @@ router.post('/add/reasonForVisit', [passport.authenticate('jwt', { session: fals
 
 
 // get walk-in patients 
-router.get("/walkin-patientlist", [passport.authenticate('jwt', { session: false }), isDoctor], (req, res) => {
+router.get("/walkin-patientlist", [passport.authenticate('jwt', { session: false }), isDoctor, isNotBlackListedToken], (req, res) => {
     WalkInPatient.find({ "clinic": req.user.clinic }).sort({ "firstName": 1 }).limit().exec(function (err, patients) {
         if (err)
             res.send({ success: false, msg: err }).status(404);
@@ -193,7 +202,7 @@ router.get("/walkin-patientlist", [passport.authenticate('jwt', { session: false
     });
 });
 
-router.post('/editWalkInPatientInfo', [passport.authenticate('jwt', { session: false }), isDoctor], (req, res, next) => {
+router.post('/editWalkInPatientInfo', [passport.authenticate('jwt', { session: false }), isDoctor, isNotBlackListedToken], (req, res, next) => {
     WalkInPatient.findOne({ nric: req.body.nric }, (err, walkinpatient) => {
         if (err)
             res.json({ success: false, msg: err });
@@ -210,7 +219,7 @@ router.post('/editWalkInPatientInfo', [passport.authenticate('jwt', { session: f
 
 
 // get patients 
-router.get("/patient-list", [passport.authenticate('jwt', { session: false }), isDoctor], (req, res) => {
+router.get("/patient-list", [passport.authenticate('jwt', { session: false }), isDoctor, isNotBlackListedToken], (req, res) => {
     Patient.find({ "patient": req.user.patient }).sort({ "firstName": 1 }).limit().exec(function (err, patients) {
         if (err)
             res.send({ success: false, msg: err }).status(404);
@@ -222,7 +231,7 @@ router.get("/patient-list", [passport.authenticate('jwt', { session: false }), i
 });
 
 
-router.post('/editPatientInfo', [passport.authenticate('jwt', { session: false }), isDoctor], (req, res, next) => {
+router.post('/editPatientInfo', [passport.authenticate('jwt', { session: false }), isDoctor, isNotBlackListedToken], (req, res, next) => {
     Patient.findOne({ nric: req.body.nric }, (err, patient) => {
         if (err)
             res.json({ success: false, msg: err });
@@ -238,7 +247,7 @@ router.post('/editPatientInfo', [passport.authenticate('jwt', { session: false }
 });
 
 // get current patient 
-router.get("/current-patient", [passport.authenticate('jwt', { session: false }), isDoctor], (req, res) => {
+router.get("/current-patient", [passport.authenticate('jwt', { session: false }), isDoctor, isNotBlackListedToken], (req, res) => {
     axios.post(webserverurl + '/GrabHealthWeb/queueList', {
         clinic: req.user.clinic
     })
@@ -259,7 +268,7 @@ router.get("/current-patient", [passport.authenticate('jwt', { session: false })
 
 });
 
-router.post('/add/medicine', [passport.authenticate('jwt', { session: false }), isDoctor], (req, res, next) => {
+router.post('/add/medicine', [passport.authenticate('jwt', { session: false }), isDoctor, isNotBlackListedToken], (req, res, next) => {
     req.body.clinic = req.user.clinic;
     console.log(req.body);
     MedicineList.findOne({ clinic: req.user.clinic }, (err, selectedMedicineList) => {
@@ -315,7 +324,7 @@ router.post('/add/medicine', [passport.authenticate('jwt', { session: false }), 
         }
     });
 });
-router.post("/create/visit", [passport.authenticate('jwt', { session: false }), isDoctor], (req, res) => {
+router.post("/create/visit", [passport.authenticate('jwt', { session: false }), isDoctor, isNotBlackListedToken], (req, res) => {
     console.log(req.body);
     Patient.findOne({nric: req.body.patient.nric}, (findpatientErr, patient) => {
         if(findpatientErr)
@@ -389,7 +398,7 @@ router.post("/create/visit", [passport.authenticate('jwt', { session: false }), 
 });
 
 // get medicine 
-router.get("/medicine", [passport.authenticate('jwt', { session: false }), isDoctor], (req, res) => {
+router.get("/medicine", [passport.authenticate('jwt', { session: false }), isDoctor, isNotBlackListedToken], (req, res) => {
     MedicineList.findOne({ clinic: req.user.clinic })
         .populate({ path: 'list', select: 'name category price effects' })
         .exec(function (err, selectedMedicineList) {
