@@ -333,7 +333,7 @@ router.post('/add/medicine', [passport.authenticate('jwt', { session: false }), 
         if (err)
             return res.json({ success: false, msg: 'Medicine list cannot be found' });
         if (medicineList) {
-            Medicine.findOne({ name: req.body.name }, (err, medicine) => {
+            Medicine.findOne({ name: req.body.name, clinic: req.user.clinic }, (err, medicine) => {
                 if (err)
                     console.log(err);
                 if (!medicine) {

@@ -649,7 +649,7 @@ router.post("/create/payment", [passport.authenticate('jwt', {session:false}), i
                                 clinic: req.user.clinic,
                                 status: 'Accepted',
                                 date: newPaymentSaved.date,
-                                billAmount: newPaymentSaved.total
+                                billedAmount: newPaymentSaved.total
                             })
                             .then((res1) => {
                                 data = res1['data'];
