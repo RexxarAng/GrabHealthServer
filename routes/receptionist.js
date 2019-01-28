@@ -701,8 +701,43 @@ router.post("/create/payment", [passport.authenticate('jwt', {session:false}), i
 
 
 // Get visit history
-
-
+router.post("/getVisit", [passport.authenticate('jwt', {session:false}), isReceptionist], (req, res) => {
+    if(!Validator.validateNric(req.body.nric)){
+        return res.json({success: false, msg: 'Please enter a valid nric'});
+    }
+    Patient.findOne({nric: req.body.nric}, (err, patient) => {
+        if(err)
+            return res.json({success: false, msg: 'cannot retrieve patient'});
+        if(patient){
+            Payment.find({clinic: req.user.clinic, patient: patient._id })
+            .populate({path: 'patient', select: '-password' })
+            .populate({path: 'clinic', select: '-receptionists -doctors -manager'})
+            .populate({path: 'visit', populate: 
+            [
+                {
+                    path: 'doctor',
+                    model: 'Doctor',
+                    select: '-password'
+            },
+                {
+                    path: 'medicineList',
+                    model: 'Medicine'
+                }
+            ]
+            })
+            .exec(function (err, payments) {
+                if(err) {
+                    return res.json({success:false, msg:'Something happened'});
+                }
+                console.log(payments);
+                return res.json({success: true, payments: payments});
+            });
+        } else {
+            return res.json({success: false, msg: 'cannot retrieve patient'});
+        }
+    })
+   
+});
 
 
 
