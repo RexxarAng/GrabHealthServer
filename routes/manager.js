@@ -350,7 +350,7 @@ router.post('/add/medicine', [passport.authenticate('jwt', { session: false }), 
                             return res.json({ success: false, msg: 'Medicine cannot be added' });
                     });
                 } else {
-                    console.log(medicine);
+
                     return res.json({ success: false, msg: 'Medicine name already taken' });
                 }
             })

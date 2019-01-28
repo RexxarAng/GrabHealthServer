@@ -182,7 +182,6 @@ router.post('/forgetpassword', (req, res) => {
 // });
 
 router.post('/blacklistToken', passport.authenticate('jwt', {session:false}), (req, res) => {
-    console.log(req.headers.authorization);
     let token = new BlackList({
         token : req.headers.authorization
     });
