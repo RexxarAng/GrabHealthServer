@@ -181,9 +181,7 @@ router.post('/add/reasonForVisit', [passport.authenticate('jwt', { session: fals
     Patient.findOne({ nric: req.body.nric }).sort({ "firstName": 1 }).limit().exec(function (err, patient) {
         if (err)
             console.log(error);
-        if (patient) {
-            console.log("Reason for visit enters: " + req.body.reasonForVisit);
-            console.log("Medicine Instructions enter: " + req.body.medicineInstructions); 
+        if (patient) { 
             Visit.findOne({ patient: patient._id, completed: false, clinic: req.user._id }, (err2, visitFound) => {
                 if (err2)
                     console.log(error);
@@ -192,7 +190,6 @@ router.post('/add/reasonForVisit', [passport.authenticate('jwt', { session: fals
                         if (err3)
                             return res.json({ success: false, msg: err })
                         else {
-                            console.log("visit created");
                             Medicine.find({ medicineInstructions: req.body.medicineInstructions }), (err4, medicineInstructions) => { 
                                 if (err4) 
                                     console.log("error 4" + err4);
@@ -201,7 +198,6 @@ router.post('/add/reasonForVisit', [passport.authenticate('jwt', { session: fals
                                     console.log("Medicine instructions added here"); 
                                 }
                             }
-                            console.log("Success");
                             return res.json({ success: true, msg: "Patient's details successfully added" })
 
                         }
@@ -294,7 +290,6 @@ router.get("/current-patient", [passport.authenticate('jwt', { session: false })
     })
         .then((res1) => {
             data = res1['data'];
-            console.log(data);
             console.log(data['queueList']['patients'][0]);
             if (data['success']) {
                 return res.json({ success: true, queueList: data['queueList']['patients'][0] });
@@ -311,7 +306,6 @@ router.get("/current-patient", [passport.authenticate('jwt', { session: false })
 
 router.post('/add/medicine', [passport.authenticate('jwt', { session: false }), isDoctor, isNotBlackListedToken], (req, res, next) => {
     req.body.clinic = req.user.clinic;
-    console.log(req.body);
     MedicineList.findOne({ clinic: req.user.clinic }, (err, selectedMedicineList) => {
         if (err)
             return res.json({ success: false, msg: 'Medicine list cannot be found' });
@@ -322,7 +316,6 @@ router.post('/add/medicine', [passport.authenticate('jwt', { session: false }), 
                 if (medicine) {
                     console.log ("inside medicine");
                     Visit.findOne({ queueNo: req.body.queueNo, completed: false }, (err3, visit) => {
-                        console.log (visit);
                         if (err3)
                             return res.json({ success: false, msg: err3 });
                         if (visit) {
@@ -340,17 +333,11 @@ router.post('/add/medicine', [passport.authenticate('jwt', { session: false }), 
                         }
                         if (visit == null)
                         { 
-                            console.log ("inside null");
                             Visit.create({queueNo: req.body.queueNo, clinic: req.user.clinic}, (err3, visit) => { // hard coded patient here 
                                 if (err3)    
                                     return res.json({ success: false, msg: err })
-                                else {
-                                    console.log("visit created");
-                                    
+                                else {                                    
                                     visit.medicineList.push(medicine._id);
-                                    console.log("Medicine instructions added here");
-                                     
-                                    console.log("Success");
                                     return res.json({ success: true, msg: "Patient's details successfully added" })
 
                                 }
@@ -368,7 +355,6 @@ router.post('/add/medicine', [passport.authenticate('jwt', { session: false }), 
 
 
 router.post("/create/visit", [passport.authenticate('jwt', { session: false }), isDoctor], (req, res) => {
-    console.log(req.body);
     Patient.findOne({nric: req.body.patient.nric}, (findpatientErr, patient) => {
         if(findpatientErr)
             return res.json({success: false, msg: findpatientErr});
@@ -380,14 +366,11 @@ router.post("/create/visit", [passport.authenticate('jwt', { session: false }), 
                     let medicineList = [];
                     const loopMedicineList = async () => {
                         await Promise.all(req.body.medicineList.map(async medicine => {
-                            console.log(medicine.name);
-                            console.log(req.user.clinic);
                             await Medicine.findOne({name: medicine.name, clinic: req.user.clinic}, (err, medicineFound) => {
                                 if(err)
                                     console.log(err)
                                 if(medicineFound){
                                     medicineList.push(medicineFound._id);
-                                    console.log(medicineFound);
                                 } else{
                                     console.log('Cant find the medicine');
                                 }

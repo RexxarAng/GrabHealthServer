@@ -166,7 +166,6 @@ router.post('/changePassword', [passport.authenticate('jwt', { session: false })
 
 // Create patient
 router.post('/createPatient', [passport.authenticate('jwt', {session:false}), isReceptionist, isNotBlackListedToken], (req, res) => {
-    console.log(req.body);
     if(!Validator.validateNric(req.body.nric)){
         return res.json({success:false, msg: "Invalid IC number!"});
     };
@@ -266,7 +265,6 @@ router.post('/createPatient', [passport.authenticate('jwt', {session:false}), is
                                     console.log(err3);
                                 if(savedWalkInPatient){
                                     savedWalkInPatient.save();
-                                    console.log(savedWalkInPatient);
                                     return res.json({success: true, msg: 'Walk-In Patient successfully created!'});
                                 }
                                 return res.json({success: false, msg: 'Walk-In Patient cannot be created!'});                                        
@@ -389,7 +387,6 @@ router.get("/patient-list", [passport.authenticate('jwt', {session:false}), isRe
 
 // Add patient to queue
 router.post('/addPatientToQueue', [passport.authenticate('jwt', {session:false}), isReceptionist, isNotBlackListedToken], (req, res) => {
-    console.log(req.body);
     req.body.clinic = req.user.clinic;
 
     axios.post(webserverurl + '/GrabHealthWeb/addPatientToQueue', {                       
@@ -406,7 +403,6 @@ router.post('/addPatientToQueue', [passport.authenticate('jwt', {session:false})
     })
     .then((res1) => {
         data = res1['data'];
-        console.log(data);
         if(data['success']) {
             return res.json({success: true, msg: 'Walk-In Patient successfully added to queue!'});
         } else {
@@ -422,7 +418,6 @@ router.post('/addPatientToQueue', [passport.authenticate('jwt', {session:false})
 
 // Remove patient from queue
 router.post('/removePatientFromQueue', [passport.authenticate('jwt', {session:false}), isReceptionist, isNotBlackListedToken], (req, res) => {
-    console.log(req.body);
     axios.post(webserverurl + '/GrabHealthWeb/removePatientFromQueue', {
         nric: req.body.nric,
         clinic: req.user.clinic
@@ -446,7 +441,6 @@ router.post('/removePatientFromQueue', [passport.authenticate('jwt', {session:fa
 
 //Get queue list
 router.get("/queueList", [passport.authenticate('jwt', {session:false}), isReceptionist, isNotBlackListedToken], (req, res) => {
-    console.log(req.body);
     axios.post(webserverurl + '/GrabHealthWeb/queueList',{
         clinic: req.user.clinic
     })
@@ -490,7 +484,6 @@ router.get("/pendingList", [passport.authenticate('jwt', {session:false}), isRec
 
 // Accept appointment request
 router.post('/acceptAppointmentRequest', [passport.authenticate('jwt', {session:false}), isReceptionist, isNotBlackListedToken], (req, res) => {
-    console.log(req.body);
     req.body.clinic = req.user.clinic;
 
     axios.post(webserverurl + '/GrabHealthWeb/acceptAppointmentRequest', {                       
@@ -524,7 +517,6 @@ router.post('/acceptAppointmentRequest', [passport.authenticate('jwt', {session:
 
 // Reject appointment request
 router.post('/rejectAppointmentRequest', [passport.authenticate('jwt', {session:false}), isReceptionist, isNotBlackListedToken], (req, res) => {
-    console.log(req.body);
     axios.post(webserverurl + '/GrabHealthWeb/rejectAppointmentRequest', {
         nric: req.body.nric,
         clinic: req.user.clinic
