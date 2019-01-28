@@ -163,23 +163,23 @@ router.post('/forgetpassword', (req, res) => {
     });
 });
 
-router.post('/createAdmin', (req, res) => {
-    let newAdmin = new Admin({
-        firstName: req.body.firstName,
-        lastName: req.body.lastName,
-        email: req.body.email,
-        password: req.body.password,
-        contactNo: req.body.contactNo
-    });
+// router.post('/createAdmin', (req, res) => {
+//     let newAdmin = new Admin({
+//         firstName: req.body.firstName,
+//         lastName: req.body.lastName,
+//         email: req.body.email,
+//         password: req.body.password,
+//         contactNo: req.body.contactNo
+//     });
 
-    Admin.addUser(newAdmin, (err, admin) => {
-        if(err){
-            return res.json({success: false, msg: err});
-        } else {
-            return res.json({success: true, msg: "Admin created"});
-        }
-    });
-});
+//     Admin.addUser(newAdmin, (err, admin) => {
+//         if(err){
+//             return res.json({success: false, msg: err});
+//         } else {
+//             return res.json({success: true, msg: "Admin created"});
+//         }
+//     });
+// });
 
 router.post('/blacklistToken', passport.authenticate('jwt', {session:false}), (req, res) => {
     console.log(req.headers.authorization);

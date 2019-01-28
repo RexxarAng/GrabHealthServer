@@ -644,10 +644,10 @@ router.post("/create/payment", [passport.authenticate('jwt', {session:false}), i
                         if(err)
                             res.json({success: false, msg: 'Something happened, Cannot create a new payment'});
                         if(newPaymentSaved){
-                            axios.post(webserverurl + '/GrabHealthWeb/changeAppointmentStatus', {
+                            axios.post(webserverurl + '/GrabHealthWeb/completeAppointment', {
                                 nric: visit.patient.nric,
                                 clinic: req.user.clinic,
-                                status: 'Accepted',
+                                status: 'Completed',
                                 date: newPaymentSaved.date,
                                 billedAmount: newPaymentSaved.total
                             })
