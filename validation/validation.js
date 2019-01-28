@@ -19,6 +19,8 @@ module.exports.validateContactNo = function(contactNo){
 }
 
 module.exports.validateNric = function(ic){
+    if(ic === null || ic === undefined || ic === '')
+        return false;
     var icArray = new Array(9);
     for (let i = 0; i < 9; i++) {
       icArray[i] = ic.charAt(i);

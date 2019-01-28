@@ -145,7 +145,7 @@ router.post('/authenticate2FA', (req, res) => {
                         signedUser.tempKey = undefined;
                         signedUser.key = undefined;
                         const token = jwt.sign(JSON.parse(JSON.stringify(signedUser)), config.secret, {
-                            expiresIn: 3600 
+                            expiresIn: 86400 
                         });
                         return res.json({
                             success: true,

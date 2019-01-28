@@ -12,7 +12,7 @@ const BlackListSchema = mongoose.Schema({
     created_at: {
         type: Date,
         default: Date.now,
-        expires: 3600
+        expires: 86400
     }
 });
 
