@@ -69,7 +69,10 @@ isNotBlackListedToken = function(req, res, next){
 }
 
 router.post('/changePassword', [passport.authenticate('jwt', { session: false }), isDoctor], (req, res, next) => {
-    if(!validation.validate(req.body.newPassword)){
+    if(req.body.newPassword === null || req.body.currentPassword === null || req.body.newPassword === undefined || req.body.currentPassword === undefined) 
+        return res.json({success: false, msg: "Please enter current password and new password"});
+
+    if(!Validator.validatePasswordStrength(req.body.newPassword)){
         return res.json({success: false, msg: "Please ensure password contains at least 8 characters including uppercase, lowercase, digits and no spaces "})
     }
     Doctor.findOne({_id: req.user._id}, (err, doctor) => {
